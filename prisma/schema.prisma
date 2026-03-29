@@ -1,0 +1,212 @@
+generator client {
+  provider      = "prisma-client-js"
+  engineType    = "binary" // required for classic engine
+  binaryTargets = ["native", "rhel-openssl-3.0.x"] // critical for Vercel
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EDITOR
+  USER
+}
+
+model User {
+  id            String       @id @map("_id")
+  name          String
+  lastName      String?
+  phoneNumber   String?
+  email         String
+  emailVerified Boolean      @default(false)
+  isActive      Boolean      @default(false)
+  image         String?
+  bio           String?
+  location      String?
+  isDeleted     Boolean      @default(false)
+  role          Role[]       @default([USER])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  products      Product[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @map("_id")
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @map("_id")
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @map("_id")
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  token     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  desc            String?
+  slug            String    @unique
+  imageUrl        String?
+  metaTitle       String?
+  metaDescription String?
+  isFeatured      Boolean   @default(false)
+  isDeleted       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  products        Product[]
+}
+
+enum DiscountType {
+  NONE
+  FIXED
+}
+
+type ProductVariant {
+  size          String
+  price         String
+  stock         String?
+  discountType  DiscountType?
+  discountPrice String?
+}
+
+enum ProductStatus {
+  PUBLISHED
+  PENDING
+  DRAFT
+  DELETED
+}
+
+enum productType {
+  PHYSICAL
+  DIGITAL
+}
+
+type ImageObj {
+  imageUrl String
+  imageID  String
+}
+
+model Product {
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  productName      String
+  shortDescription String?
+  fullDescription  String
+  slug             String           @unique
+  status           ProductStatus    @default(PENDING)
+  type             productType      @default(PHYSICAL)
+  variants         ProductVariant[]
+  images           ImageObj[]
+  thumbnail        String?
+  totalSold        Int              @default(0)
+  sortingNumber    Int?             @default(0)
+  isDeleted        Boolean          @default(false)
+  isFeatured       Boolean          @default(false)
+  promotionEnd     DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  metaTitle        String?
+  metaDescription  String?
+
+  artist     User         @relation(fields: [artistId], references: [id])
+  artistId   String
+  category   Category     @relation(fields: [categoryId], references: [id])
+  categoryId String       @db.ObjectId
+  boostings  Promotions[]
+  cartItems  CartItem[]
+}
+
+
+model CartItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  thumbnail String
+  size      String
+  price     String
+  subTotal  String
+  quantity  Int
+  artist    String
+  orderId   String   @db.ObjectId
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId String   @db.ObjectId
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id                 String      @id @default(auto()) @map("_id") @db.ObjectId
+  fullName           String
+  phone              String
+  fullAddress        String
+  totalPrice         String
+  orderNumber        String
+  email              String?
+  paymentScreenshot  String?
+  customRequirements String?
+  status             OrderStatus @default(PENDING)
+  cartItems          CartItem[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+}
