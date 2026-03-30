@@ -9,6 +9,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 enum Role {
   ADMIN
   MANAGER
@@ -165,7 +166,6 @@ model Product {
   artistId   String
   category   Category     @relation(fields: [categoryId], references: [id])
   categoryId String       @db.ObjectId
-  boostings  Promotions[]
   cartItems  CartItem[]
 }
 

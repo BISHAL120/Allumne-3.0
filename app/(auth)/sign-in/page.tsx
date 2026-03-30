@@ -10,29 +10,17 @@ export default async function Page({
   const params = await searchParams;
   const joinAs = params.joinas || null;
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center gap-2 md:justify-start">
+    <div className="flex min-h-svh items-center justify-center">
+      <div className="flex w-full max-w-sm flex-col gap-4 p-6 md:p-10">
+        <div className="flex justify-center gap-2">
           <a href="#" className="flex items-center gap-2 font-medium">
             <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
               <GalleryVerticalEnd className="size-4" />
             </div>
-            Wallora.
+             ব্যবসা সহায়ক
           </a>
         </div>
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-xs">
-            <SignInForm joinAs={joinAs} />
-          </div>
-        </div>
-      </div>
-      <div className="bg-muted relative hidden lg:block">
-        <Image
-          fill
-          src="https://images.unsplash.com/photo-1580687580679-3f3e9ca2ef35?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
+        <SignInForm joinAs={joinAs} />
       </div>
     </div>
   );
