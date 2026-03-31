@@ -9,6 +9,26 @@ export default async function Page({
 }) {
   const params = await searchParams;
   const joinAs = params.joinas || null;
+
+  const crediantials = [
+    {
+      role: "admin",
+      email: "admin@example.com",
+      password: "12345678",
+    },
+    {
+      role: "Manager",
+      email: "manager@example.com",
+      password: "12345678",
+    },
+    {
+      role: "user",
+      email: "user@example.com",
+      password: "12345678",
+    },
+  ]
+
+
   return (
     <div className="flex min-h-svh items-center justify-center">
       <div className="flex w-full max-w-sm flex-col gap-4 p-6 md:p-10">
@@ -17,10 +37,10 @@ export default async function Page({
             <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
               <GalleryVerticalEnd className="size-4" />
             </div>
-             ব্যবসা সহায়ক
+             Smart Inventory
           </a>
         </div>
-        <SignInForm joinAs={joinAs} />
+        <SignInForm joinAs={joinAs} quickLoginCredentials={crediantials} />
       </div>
     </div>
   );

@@ -19,7 +19,7 @@ export const auth = betterAuth({
     sendResetPassword: async ({user, url}) => {
       // Send email using Resend
       const { error } = await resend.emails.send({
-        from: 'Wallora <support@walloraarts.com>',
+        from: 'Smart Inventory <support@Smart Inventoryarts.com>',
         to: user.email,
         subject: 'Reset Password',
         // html: forgotPasswordTemplate(url),
@@ -27,12 +27,12 @@ export const auth = betterAuth({
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee;">
             <h2 style="color: #333;">Reset Your Password</h2>
             <p>Hello,</p>
-            <p>You requested to reset your password for your Wallora account. Click the button below to proceed:</p>
+            <p>You requested to reset your password for your Smart Inventory account. Click the button below to proceed:</p>
             <a href="${url}" style="display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; text-decoration: none; border-radius: 5px; margin: 20px 0;">Reset Password</a>
             <p>If you didn't request this, please ignore this email.</p>
             <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
               <p style="font-size: 12px; color: #666;">Demo Image Test:</p>
-              <img src="https://via.placeholder.com/150x50?text=Wallora+Arts" alt="Wallora Arts Logo" />
+              <img src="https://via.placeholder.com/150x50?text=Smart Inventory+Arts" alt="Smart Inventory Arts Logo" />
             </div>
           </div>
         `,

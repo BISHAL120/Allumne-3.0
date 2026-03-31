@@ -1,5 +1,13 @@
 import AllProductsPage from "@/components/admin/products/allProducts";
 import { getAllCategory, getAllProducts } from "@/lib/data-layer/admin/admin";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Products",
+  description: "Manage all products",
+};
+
+
 
 const Page = async ({
   searchParams,

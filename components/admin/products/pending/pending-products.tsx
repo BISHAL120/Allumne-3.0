@@ -27,7 +27,7 @@ import { Product } from "@prisma/client";
 
 interface ProductProps {
   products: (Product & {
-    artist: {
+    user: {
       name: string;
     };
   })[];
@@ -162,7 +162,7 @@ export default function PendingProducts({
                           width={36}
                           height={36}
                           src={
-                            product.images[0]?.imageUrl || "/placeholder.svg"
+                            product.thumbnail || product.images[0]?.imageUrl || "/placeholder.svg"
                           }
                           alt={product.productName}
                           className="w-9 h-9 rounded-md object-cover border border-border/60"

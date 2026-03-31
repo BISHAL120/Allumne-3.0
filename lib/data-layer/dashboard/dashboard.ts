@@ -46,7 +46,7 @@ export const getArtistAllProducts = async ({
             variants: true,
             createdAt: true,
             totalSold: true,
-            artist: {
+            user: {
                 select: {
                     name: true,
                 }
@@ -94,7 +94,7 @@ export const getArtistDeletedProducts = async ({
             isDeleted: true,
         },
         include: {
-            artist: {
+            user: {
                 select: {
                     name: true,
                 },

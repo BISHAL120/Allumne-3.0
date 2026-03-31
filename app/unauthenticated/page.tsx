@@ -28,7 +28,7 @@ const Page = () => {
 
         {/* Main Title */}
         <h1 className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-linear-to-r from-indigo-600 to-pink-600 mb-6 animate-fade-in-up">
-          Wallora
+          Smart Inventory
         </h1>
 
         {/* Subtitle */}

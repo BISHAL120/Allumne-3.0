@@ -65,7 +65,7 @@ export const getOriginalProducts = cache(async ({
       isFeatured: true,
       variants: true,
       shortDescription: true,
-      artist: {
+      user: {
         select: {
           id: true,
           name: true,
@@ -154,7 +154,7 @@ export const getDecoreProducts = cache(async ({
       isFeatured: true,
       variants: true,
       shortDescription: true,
-      artist: {
+      user: {
         select: {
           id: true,
           name: true,
@@ -188,7 +188,7 @@ export const getProductDetailsById = cache(async (id: string) => {
       slug: id
     },
     include: {
-      artist: {
+      user: {
         select: {
           id: true,
           name: true,
@@ -370,7 +370,7 @@ export const getProductByArtistId = cache(async ({
       isFeatured: true,
       variants: true,
       shortDescription: true,
-      artist: {
+      user: {
         select: {
           id: true,
           name: true,
@@ -434,7 +434,7 @@ export const getFeaturedProducts = async ({ skipValue = 0, takeValue = 4 }: { sk
       thumbnail: true,
       variants: true,
       images: true,
-      artist: {
+      user: {
         select: {
           id: true,
           name: true,

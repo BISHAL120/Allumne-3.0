@@ -1,5 +1,12 @@
 import NewCategory from "@/components/admin/category/id/new-category";
 import { getCategoryDetailsById } from "@/lib/data-layer/admin/admin";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "New Category",
+  description: "Create a new category manually",
+};
+
 
 const Page = async ({
   searchParams,

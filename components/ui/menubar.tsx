@@ -4,7 +4,8 @@ import * as React from "react"
 import { Menubar as MenubarPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
-import { CheckIcon, ChevronRightIcon } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Tick02Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
 
 function Menubar({
   className,
@@ -78,7 +79,10 @@ function MenubarContent({
         align={align}
         alignOffset={alignOffset}
         sideOffset={sideOffset}
-        className={cn("z-50 min-w-36 origin-(--radix-menubar-content-transform-origin) overflow-hidden rounded-none bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95", className )}
+        className={cn(
+                                  "dark z-50 min-w-36 origin-(--radix-menubar-content-transform-origin) overflow-hidden rounded-none text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 animate-none! relative bg-popover/70 before:pointer-events-none before:absolute before:inset-0 before:-z-1 before:rounded-[inherit] before:backdrop-blur-2xl before:backdrop-saturate-150 **:data-[slot$=-item]:focus:bg-foreground/10 **:data-[slot$=-item]:data-highlighted:bg-foreground/10 **:data-[slot$=-separator]:bg-foreground/5 **:data-[slot$=-trigger]:focus:bg-foreground/10 **:data-[slot$=-trigger]:aria-expanded:bg-foreground/10! **:data-[variant=destructive]:focus:bg-foreground/10! **:data-[variant=destructive]:text-accent-foreground! **:data-[variant=destructive]:**:text-accent-foreground!",
+                                  className
+                                )}
         {...props}
       />
     </MenubarPortal>
@@ -130,8 +134,7 @@ function MenubarCheckboxItem({
     >
       <span className="pointer-events-none absolute left-1.5 flex size-4 items-center justify-center [&_svg:not([class*='size-'])]:size-4">
         <MenubarPrimitive.ItemIndicator>
-          <CheckIcon
-          />
+          <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} />
         </MenubarPrimitive.ItemIndicator>
       </span>
       {children}
@@ -159,8 +162,7 @@ function MenubarRadioItem({
     >
       <span className="pointer-events-none absolute left-1.5 flex size-4 items-center justify-center [&_svg:not([class*='size-'])]:size-4">
         <MenubarPrimitive.ItemIndicator>
-          <CheckIcon
-          />
+          <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} />
         </MenubarPrimitive.ItemIndicator>
       </span>
       {children}
@@ -239,7 +241,7 @@ function MenubarSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className="ml-auto size-4" />
+      <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} className="ml-auto size-4" />
     </MenubarPrimitive.SubTrigger>
   )
 }
@@ -251,7 +253,10 @@ function MenubarSubContent({
   return (
     <MenubarPrimitive.SubContent
       data-slot="menubar-sub-content"
-      className={cn("z-50 min-w-32 origin-(--radix-menubar-content-transform-origin) overflow-hidden rounded-none bg-popover text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", className )}
+      className={cn(
+                        "dark z-50 min-w-32 origin-(--radix-menubar-content-transform-origin) overflow-hidden rounded-none text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 animate-none! relative bg-popover/70 before:pointer-events-none before:absolute before:inset-0 before:-z-1 before:rounded-[inherit] before:backdrop-blur-2xl before:backdrop-saturate-150 **:data-[slot$=-item]:focus:bg-foreground/10 **:data-[slot$=-item]:data-highlighted:bg-foreground/10 **:data-[slot$=-separator]:bg-foreground/5 **:data-[slot$=-trigger]:focus:bg-foreground/10 **:data-[slot$=-trigger]:aria-expanded:bg-foreground/10! **:data-[variant=destructive]:focus:bg-foreground/10! **:data-[variant=destructive]:text-accent-foreground! **:data-[variant=destructive]:**:text-accent-foreground!",
+                        className
+                      )}
       {...props}
     />
   )

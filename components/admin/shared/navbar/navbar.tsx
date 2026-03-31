@@ -22,7 +22,7 @@ const AdminNavbar = async () => {
   }
 
   if (!session?.user.role.includes("ADMIN")) {
-    return redirect("/dashboard");
+    return redirect("/manager");
   }
 
   return (

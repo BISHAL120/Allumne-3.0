@@ -35,7 +35,17 @@ const formSchema = z.object({
     .max(50, { message: "Password must be at most 50 characters" }),
 });
 
-export function SignInForm({ joinAs }: { joinAs: string | null }) {
+export function SignInForm({
+  joinAs,
+  quickLoginCredentials,
+}: {
+  joinAs: string | null;
+  quickLoginCredentials?: {
+    role: string;
+    email: string;
+    password: string;
+  }[];
+}) {
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -77,7 +87,7 @@ export function SignInForm({ joinAs }: { joinAs: string | null }) {
       message: "Login successful",
       duration: 5000,
     });
-    router.push("/dashboard/products");
+    router.push("/manager/products");
   }
 
   return (
@@ -167,6 +177,32 @@ export function SignInForm({ joinAs }: { joinAs: string | null }) {
               Remember Me
             </Label>
           </div>
+
+          {quickLoginCredentials && quickLoginCredentials.length > 0 && (
+            <div className="space-y-4">
+              <FieldSeparator className="mb-2">Quick Login</FieldSeparator>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {quickLoginCredentials.map((cred) => (
+                  <Button
+                    key={cred.role}
+                    type="button"
+                    variant="outline"
+                    className="w-full text-xs h-8 px-2"
+                    onClick={async () => {
+                      form.setValue("email", cred.email);
+                      form.setValue("password", cred.password);
+                      // Auto-submit after a brief delay to show the values filled
+                      setTimeout(() => {
+                        form.handleSubmit(onSubmit)();
+                      }, 100);
+                    }}
+                  >
+                    {cred.role.charAt(0).toUpperCase() + cred.role.slice(1)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Field>
             <Button disabled={loading} type="submit" className="w-full">

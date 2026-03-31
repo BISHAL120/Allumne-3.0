@@ -122,7 +122,7 @@ const ComingSoon = () => {
             
             {/* Floating Elements Container */}
             <div className="absolute inset-0 flex items-center justify-center">
-              {/* Central Store/Dashboard Icon */}
+              {/* Central Store/manager Icon */}
               <div className="relative z-10 w-32 h-32 md:w-40 md:h-40 bg-card rounded-2xl shadow-2xl border flex items-center justify-center transform hover:scale-105 transition-transform duration-500 group">
                 <div className="absolute inset-0 bg-linear-to-br from-primary/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                 <Store className="w-16 h-16 md:w-20 md:h-20 text-primary drop-shadow-sm" />
@@ -161,7 +161,7 @@ const ComingSoon = () => {
       
       {/* Footer / Copyright */}
       <div className="absolute bottom-4 left-0 w-full text-center text-xs text-muted-foreground opacity-60">
-        &copy; {new Date().getFullYear()} Wallora Inc. All rights reserved.
+        &copy; {new Date().getFullYear()} Smart Inventory Inc. All rights reserved.
       </div>
     </div>
   );

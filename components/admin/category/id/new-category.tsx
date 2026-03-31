@@ -158,7 +158,7 @@ const NewCategory = ({ initialData }: NewCategoryProps) => {
 
       router.push(
         path.includes("dashboard")
-          ? "/dashboard/categories"
+          ? "/manager/categories"
           : "/admin/categories",
       );
       router.refresh();

@@ -2,7 +2,6 @@
 
 import {
   AudioWaveform,
-  BadgeDollarSignIcon,
   BoxIcon,
   Brush,
   ChartColumnBig,
@@ -11,24 +10,18 @@ import {
   FileMinus,
   Frame,
   GalleryVerticalEnd,
-  HandHelping,
   ListOrdered,
   Map,
   Package,
   PieChart,
   PlusSquare,
-  Rocket,
-  Settings,
-  Settings2,
   ShieldAlertIcon,
-  Store,
   TrafficCone,
   Trash2,
 } from "lucide-react";
 import * as React from "react";
 
 import { NavMain } from "@/components/admin/shared/adminSidebar/nav-main";
-import { NavProjects } from "@/components/admin/shared/adminSidebar/nav-projects";
 import { NavUser } from "@/components/admin/shared/adminSidebar/nav-user";
 import { TeamSwitcher } from "@/components/admin/shared/adminSidebar/team-switcher";
 import {
@@ -43,7 +36,7 @@ import {
 const data = {
   teams: [
     {
-      name: "Wallora Art",
+      name: "Smart Inventory Art",
       logo: Command,
       plan: "Startup",
       url: "/admin",
@@ -65,6 +58,10 @@ const data = {
       url: "#",
       icon: BoxIcon,
       items: [
+        {
+          title: "Create Order",
+          url: "/admin/orders/create",
+        },
         {
           title: "New Orders",
           url: "/admin/orders/new",
@@ -103,6 +100,11 @@ const data = {
         { title: "Add Product", url: "/admin/products/add", icon: PlusSquare },
         { title: "All Products", url: "/admin/products", icon: ListOrdered },
         {
+          title: "Restock Queue",
+          url: "/admin/products/restock",
+          icon: ShieldAlertIcon,
+        },
+        {
           title: "Pending Products",
           url: "/admin/products/pending",
           icon: FileMinus,
@@ -116,119 +118,6 @@ const data = {
           title: "Deleted Products",
           url: "/admin/products/deleted",
           icon: Trash2,
-        },
-      ],
-    },
-    {
-      title: "Store's",
-      url: "#",
-      icon: Store,
-      items: [
-        {
-          title: "New Store",
-          url: "/admin/store/new",
-        },
-        {
-          title: "All Stores",
-          url: "/admin/store",
-        },
-      ],
-    },
-    /* {
-      title: "Campain's",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "All Campains",
-          url: "/admin/campaign",
-        },
-        {
-          title: "Add New",
-          url: "/admin/campaign/add",
-        },
-      ],
-    }, */
-    /* {
-      title: "Settings",
-      url: "#",
-      icon: Settings,
-      items: [
-        {
-          title: "General",
-          url: "/admin/settings/general",
-        },
-        {
-          title: "Store's",
-          url: "/admin/settings/store",
-        },
-        {
-          title: "Billing",
-          url: "/admin/settings/billing",
-        },
-        {
-          title: "Limits",
-          url: "/admin/settings/limits",
-        },
-      ],
-    }, */
-    {
-      title: "Promotions",
-      url: "#",
-      icon: Rocket,
-      items: [
-        {
-          title: "All Promotions",
-          url: "/admin/promotions",
-        },
-        {
-          title: "Pending Promotions",
-          url: "/admin/promotions/pending",
-        },
-      ],
-    },
-    {
-      title: "Carousels",
-      url: "#",
-      icon: Rocket,
-      items: [
-        {
-          title: "Create Carousels",
-          url: "/admin/carousels/add",
-        },
-        {
-          title: "All Carousels",
-          url: "/admin/carousels",
-        },
-      ],
-    },
-    /* {
-      title: "Benefits",
-      url: "#",
-      icon:  HandHelping,
-      items: [
-        {
-          title: "All Benefits",
-          url: "/admin/benefits",
-        },
-        {
-          title: "Create Benefits",
-          url: "/admin/benefits/add",
-        },
-      ],
-    }, */
-    {
-      title: "Pricing",
-      url: "#",
-      icon: BadgeDollarSignIcon,
-      items: [
-        {
-          title: "All Packages",
-          url: "/admin/packages",
-        },
-        {
-          title: "Create Packages",
-          url: "/admin/packages/add",
         },
       ],
     },
@@ -287,7 +176,6 @@ export function AdminSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {/* <NavProjects reports={data.Reports} /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

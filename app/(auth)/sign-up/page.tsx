@@ -17,7 +17,7 @@ export default async function Page({
             <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
               <GalleryVerticalEnd className="size-4" />
             </div>
-            ব্যবসা সহায়ক
+             Smart Inventory
           </a>
         </div>
         <SignupForm joinAs={joinAs} />

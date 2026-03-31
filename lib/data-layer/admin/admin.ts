@@ -69,7 +69,7 @@ export async function getAllProducts({
     const products = await db.product.findMany({
         where: whereClause,
         include: {
-            artist: {
+            user: {
                 select: {
                     name: true
                 }
@@ -132,7 +132,7 @@ export async function getAllPendingProducts({ page, per_page, search }: { page: 
             ...whereClause
         },
         include: {
-            artist: {
+            user: {
                 select: {
                     name: true
                 }
@@ -195,7 +195,7 @@ export async function getAllDraftsProducts({ page, per_page, search }: { page: n
             ...whereClause
         },
         include: {
-            artist: {
+            user: {
                 select: {
                     name: true
                 }
@@ -255,7 +255,7 @@ export async function getAllDeletedProducts({ page, per_page, search }: { page: 
             ...whereClause
         },
         include: {
-            artist: {
+            user: {
                 select: {
                     name: true
                 }
@@ -410,7 +410,7 @@ export const getOrderDetails = async ({ order_id }: { order_id: string }) => {
                     id: true,
                     thumbnail: true,
                     title: true,
-                    artist: true,
+                    user: true,
                     size: true,
                     price: true,
                     quantity: true,
@@ -532,7 +532,7 @@ export const getOrderDetailsById = async (orderId: string) => {
                     size: true,
                     price: true,
                     quantity: true,
-                    artist: true,
+                    user: true,
                     thumbnail: true,
                     subTotal: true,
                     orderId: true,

@@ -86,7 +86,7 @@ export function AddProduct({
           variants: initialData.variants.map((variant) => ({
             size: variant.size,
             price: variant.price,
-            // stock: variant.stock,
+            stock: variant?.stock || "",
             discountType: variant.discountType || "NONE",
             discountPrice: variant.discountPrice || "",
           })),
@@ -96,6 +96,9 @@ export function AddProduct({
           metaTitle: initialData.metaTitle || "",
           metaDescription: initialData.metaDescription || "",
           categoryId: initialData.categoryId || "",
+          totalStock: initialData.variants
+            .reduce((acc, variant) => acc + (Number(variant.stock) || 0), 0)
+            .toString(),
         }
       : {
           productName: "",
@@ -106,11 +109,12 @@ export function AddProduct({
             {
               size: "",
               price: "",
-              // stock: "",
+              stock: "",
               discountType: "NONE",
               discountPrice: "",
             },
           ],
+          totalStock: "0",
           isFeatured: false,
           status: "PENDING",
           type: "PHYSICAL",
@@ -148,18 +152,34 @@ export function AddProduct({
           );
         }
       }
+
+      if (name?.startsWith("variants")) {
+        const variants = value.variants || [];
+        const total = variants.reduce((acc, variant) => {
+          return acc + (Number(variant?.stock) || 0);
+        }, 0);
+        form.setValue("totalStock", total.toString());
+      }
     });
     return () => subscription.unsubscribe();
   }, [form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!initialImages.length && !productImages?.length) {
+    if (!thumbnailURL && !thumbnailImage) {
       showError({
-        message: "Please upload at least one image.",
+        message: "Please upload Thumbnail Image.",
         duration: 5000,
       });
       return;
     }
+
+    // if (!initialImages.length && !productImages?.length) {
+    //   showError({
+    //     message: "Please upload at least one image.",
+    //     duration: 5000,
+    //   });
+    //   return;
+    // }
 
     toast.loading(loadingText);
     setIsLoading(true);
@@ -186,6 +206,7 @@ export function AddProduct({
           status: values.status || initialData.status,
           type: values.type || initialData.type,
           variants: values.variants || initialData.variants,
+          totalStock: values.totalStock,
           isFeatured: values.isFeatured || initialData.isFeatured,
           metaTitle: values.metaTitle || initialData.metaTitle,
           metaDescription:
@@ -211,7 +232,7 @@ export function AddProduct({
           router.push(
             `${
               path.includes("dashboard")
-                ? "/dashboard/products"
+                ? "/manager/products"
                 : "/admin/products"
             }`,
           ); // Redirect to the products list page after
@@ -240,7 +261,7 @@ export function AddProduct({
           router.push(
             `${
               path.includes("dashboard")
-                ? "/dashboard/products"
+                ? "/manager/products"
                 : "/admin/products"
             }`,
           ); // Redirect to the products list page after
@@ -354,6 +375,26 @@ export function AddProduct({
             title="Add Product"
             description="Add a new product to the catalog"
           />
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => form.reset()}
+            >
+              Reset
+            </Button>
+            <Button
+              type="submit"
+              form="Product-form"
+              disabled={isLoading}
+              onClick={form.handleSubmit(onSubmit)}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              {submitButtonText}
+            </Button>
+          </div>
         </div>
         <form id="Product-form" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
@@ -464,63 +505,43 @@ export function AddProduct({
               </Card>
 
               {/* Thumbnail Images Section */}
-              <Card className="w-full">
-                <CardHeader>
-                  <CardTitle>Thumbnail Images</CardTitle>
-                  <CardDescription>
-                    Upload thumbnail images here
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <input
-                    ref={thumbnailInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleThumbnail(file);
-                    }}
-                  />
+              <Controller
+                name="thumbnail"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Card className="w-full">
+                    <CardHeader>
+                      <FieldLabel htmlFor="thumbnail-images">Thumbnail Images</FieldLabel>
+                      <CardDescription>
+                        Upload thumbnail images here
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <input
+                        ref={thumbnailInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleThumbnail(file);
+                        }}
+                      />
 
-                  {thumbnailURL ? (
-                    <div className="">
-                      <div className="relative group">
-                        <Image
-                          width={200}
-                          height={200}
-                          src={thumbnailURL}
-                          alt="Thumbnail Image"
-                          className="w-87.5 h-87.5 rounded-lg object-contain border mx-auto"
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setThumbnailURL("");
-                          }}
-                          className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition-opacity"
-                          aria-label="Remove image"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      {thumbnailImage ? (
+                      {thumbnailURL ? (
                         <div className="">
                           <div className="relative group">
                             <Image
                               width={200}
                               height={200}
-                              src={URL.createObjectURL(thumbnailImage)}
+                              src={thumbnailURL}
                               alt="Thumbnail Image"
                               className="w-87.5 h-87.5 rounded-lg object-contain border mx-auto"
                             />
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
-                                setThumbnailImage(null);
+                                setThumbnailURL("");
                               }}
                               className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition-opacity"
                               aria-label="Remove image"
@@ -530,54 +551,82 @@ export function AddProduct({
                           </div>
                         </div>
                       ) : (
-                        <div
-                          onDrop={(e) =>
-                            handleThumbnail(e.dataTransfer.files[0])
-                          }
-                          onDragOver={handleDragOver}
-                          onDragLeave={handleDragLeave}
-                          onClick={() => thumbnailInputRef.current?.click()}
-                          className={`relative border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300 ${
-                            isDragging
-                              ? "border-violet-500 bg-violet-50 scale-[1.02]"
-                              : "border-slate-300 hover:border-violet-400 hover:bg-slate-800"
-                          }`}
-                        >
-                          <div className="flex flex-col items-center gap-4">
+                        <div>
+                          {thumbnailImage ? (
+                            <div className="">
+                              <div className="relative group">
+                                <Image
+                                  width={200}
+                                  height={200}
+                                  src={URL.createObjectURL(thumbnailImage)}
+                                  alt="Thumbnail Image"
+                                  className="w-87.5 h-87.5 rounded-lg object-contain border mx-auto"
+                                />
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setThumbnailImage(null);
+                                  }}
+                                  className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition-opacity"
+                                  aria-label="Remove image"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
                             <div
-                              className={`p-4 rounded-full transition-all duration-300 ${
-                                isDragging ? " scale-110" : "hover:bg-slate-800"
+                              onDrop={(e) =>
+                                handleThumbnail(e.dataTransfer.files[0])
+                              }
+                              onDragOver={handleDragOver}
+                              onDragLeave={handleDragLeave}
+                              onClick={() => thumbnailInputRef.current?.click()}
+                              className={`relative border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300 ${
+                                isDragging
+                                  ? "border-violet-500 bg-violet-50 scale-[1.02]"
+                                  : "border-slate-300 hover:border-violet-400 hover:bg-slate-800"
                               }`}
                             >
-                              <Upload
-                                className={`w-8 h-8 ${
-                                  isDragging
-                                    ? "text-violet-600"
-                                    : "text-slate-400"
-                                }`}
-                              />
+                              <div className="flex flex-col items-center gap-4">
+                                <div
+                                  className={`p-4 rounded-full transition-all duration-300 ${
+                                    isDragging
+                                      ? " scale-110"
+                                      : "hover:bg-slate-800"
+                                  }`}
+                                >
+                                  <Upload
+                                    className={`w-8 h-8 ${
+                                      isDragging
+                                        ? "text-violet-600"
+                                        : "text-slate-400"
+                                    }`}
+                                  />
+                                </div>
+                                <div>
+                                  <p className="text-lg font-semibold text-slate-200 mb-1">
+                                    {isDragging
+                                      ? "Drop images here"
+                                      : "Click to upload or drag and drop"}
+                                  </p>
+                                  <p className="text-sm text-slate-400">
+                                    PNG, JPG, GIF up to 2MB each
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-lg font-semibold text-slate-200 mb-1">
-                                {isDragging
-                                  ? "Drop images here"
-                                  : "Click to upload or drag and drop"}
-                              </p>
-                              <p className="text-sm text-slate-400">
-                                PNG, JPG, GIF up to 2MB each
-                              </p>
-                            </div>
-                          </div>
+                          )}
                         </div>
                       )}
-                    </div>
-                  )}
-                </CardContent>
-                <CardDescription className="w-full text-center text-slate-500">
-                  This image will be used in the product listing and product
-                  card.
-                </CardDescription>
-              </Card>
+                    </CardContent>
+                    <CardDescription className="w-full text-center text-slate-500">
+                      This image will be used in the product listing and product
+                      card.
+                    </CardDescription>
+                  </Card>
+                )}
+              />
             </div>
 
             {/* Art Images Section */}
@@ -935,8 +984,8 @@ export function AddProduct({
                             <SelectValue placeholder="Type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="ORIGINAL">Original</SelectItem>
-                            <SelectItem value="DECORE">Decore</SelectItem>
+                            <SelectItem value="PHYSICAL">Physical</SelectItem>
+                            <SelectItem value="DIGITAL">Digital</SelectItem>
                           </SelectContent>
                         </Select>
                         {fieldState.invalid && (
@@ -1043,7 +1092,7 @@ export function AddProduct({
                               )}
                             />
 
-                            {/* <Controller
+                            <Controller
                               name={`variants.${index}.stock`}
                               control={form.control}
                               render={({ field, fieldState }) => (
@@ -1061,45 +1110,42 @@ export function AddProduct({
                                   )}
                                 </Field>
                               )}
-                            /> */}
+                            />
 
                             <Controller
                               name={`variants.${index}.discountType`}
                               control={form.control}
                               render={({ field, fieldState }) => (
                                 <Field
-                                  orientation="responsive"
                                   data-invalid={fieldState.invalid}
                                   className="w-full"
                                 >
-                                  <div className="w-full flex flex-col gap-3">
-                                    <FieldLabel htmlFor="form-rhf-select-language">
-                                      Discount Type
-                                    </FieldLabel>
+                                  <FieldLabel
+                                    htmlFor={`variants.${index}.discountType`}
+                                  >
+                                    Discount Type
+                                  </FieldLabel>
 
-                                    <Select
-                                      name={field.name}
-                                      value={field.value}
-                                      disabled={isLoading}
-                                      onValueChange={field.onChange}
+                                  <Select
+                                    name={field.name}
+                                    value={field.value}
+                                    disabled={isLoading}
+                                    onValueChange={field.onChange}
+                                  >
+                                    <SelectTrigger
+                                      id={`variants.${index}.discountType`}
+                                      aria-invalid={fieldState.invalid}
+                                      className="w-full"
                                     >
-                                      <SelectTrigger
-                                        id="form-rhf-select-language"
-                                        aria-invalid={fieldState.invalid}
-                                        className="w-full! min-w-50"
-                                      >
-                                        <SelectValue placeholder="Select" />
-                                      </SelectTrigger>
-                                      <SelectContent position="item-aligned">
-                                        <SelectItem value="NONE">
-                                          None
-                                        </SelectItem>
-                                        <SelectItem value="FIXED">
-                                          Fixed
-                                        </SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
+                                      <SelectValue placeholder="Select" />
+                                    </SelectTrigger>
+                                    <SelectContent position="item-aligned">
+                                      <SelectItem value="NONE">None</SelectItem>
+                                      <SelectItem value="FIXED">
+                                        Fixed
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
 
                                   {fieldState.invalid && (
                                     <FieldError errors={[fieldState.error]} />
@@ -1175,7 +1221,7 @@ export function AddProduct({
                               {
                                 size: "",
                                 price: "",
-                                // stock: "",
+                                stock: "",
                                 discountType: "NONE",
                                 discountPrice: "",
                               },
@@ -1186,6 +1232,42 @@ export function AddProduct({
                           Add Variant
                         </Button>
                       </div>
+                    </Field>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Total Stock Field */}
+            <Card>
+              <CardContent className="pt-6">
+                <Controller
+                  name="totalStock"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field>
+                      <FieldLabel className="text-lg font-bold">
+                        Total Stock
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        type="number"
+                        disabled={isLoading}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "" || !isNaN(Number(val))) {
+                            field.onChange(val);
+                          }
+                        }}
+                        placeholder="0"
+                        className="bg-muted font-mono text-lg"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Automatically calculated from all variant stocks
+                      </p>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />

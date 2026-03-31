@@ -5,12 +5,11 @@ import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const messages = [
-  "Contact us for custom orders",
+  "Need help managing inventory?",
   "Chat with us on WhatsApp",
-  "Need help? Message us",
-  "Get custom sizing info"
+  "Questions about your orders?",
+  "Get support for your system"
 ];
-
 const WhatsAppButton = () => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
 
@@ -23,7 +22,7 @@ const WhatsAppButton = () => {
   }, []);
 
   return (
-    <Link className="fixed right-5 bottom-5 group z-50" href="https://wa.me/+8801752489484" target="_blank">
+    <Link className="fixed right-5 bottom-5 group z-50" href="https://wa.me/+8801623939834" target="_blank">
       <div className="absolute bottom-full right-0 mb-2 w-max h-8 px-3 flex items-center bg-black text-white text-xs font-medium rounded-lg opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.span

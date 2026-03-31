@@ -85,7 +85,7 @@ export function SignupForm({joinAs}: {joinAs: string | null}) {
     setLoading(false);
     toast.dismiss();
     showSuccess({ message: "Account created successfully", duration: 5000 });
-    router.push("/dashboard/products");
+    router.push("/manager/products");
   }
 
   return (

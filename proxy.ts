@@ -7,14 +7,14 @@ export async function proxy(request: NextRequest) {
 
     const protectedApiRoutes: { pattern: string; roles?: string[] }[] = [
         { pattern: '/api/admin/*', roles: ['ADMIN'] },
-        { pattern: '/api/artists/*', roles: ['ARTIST', 'COLLECTOR', 'ADMIN'] },
+        { pattern: '/api/manager/*', roles: ['MANAGER', 'EDITOR', 'ADMIN'] },
         // Add other protected API routes here
     ];
 
     // Protected page routes with role requirements
     const protectedPageRoutes: { pattern: string; roles?: string[] }[] = [
         { pattern: '/admin/*', roles: ['ADMIN'] },
-        { pattern: '/dashboard/*', roles: ['ARTIST', 'COLLECTOR', 'ADMIN'] },
+        { pattern: '/manager/*', roles: ['MANAGER', 'EDITOR', 'ADMIN'] },
     ];
 
     // Helper function to check if path matches a pattern
@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest) {
     const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
 
     if (session && isAuthRoute) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        return NextResponse.redirect(new URL('/manager', request.url));
     }
 
     if (pathname.startsWith('/api/')) {

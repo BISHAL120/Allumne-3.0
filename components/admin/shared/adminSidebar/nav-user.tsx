@@ -96,7 +96,7 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/promotions/add">
+                <Link href="/manager/promotions/add">
                   <Sparkles />
                   Promote Products
                 </Link>

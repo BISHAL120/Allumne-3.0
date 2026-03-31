@@ -13,13 +13,14 @@ export const formSchema = z.object({
     slug: z.string().min(1, "Product URL is required"),
     variants: z.array(
         z.object({
-            size: z.string().min(1, "Size is required"),
-            price: z.string().min(1, "Price must be greater than 1"),
-            // stock: z.string().min(1, "Stock must be 1 or more"),
+            size: z.string().optional(),
+            price: z.string().optional(),
+            stock: z.string().optional(),
             discountType: z.enum(["FIXED", "NONE"]).optional(),
             discountPrice: z.string().optional(),
         })
-    ),
+    ).optional(),
+    totalStock: z.string().min(1, "Total stock must be 1 or more"),
     isFeatured: z.boolean(),
     status: z.enum(["PUBLISHED", "PENDING", "DRAFT", "DELETED"]),
     type: z.enum(["PHYSICAL", "DIGITAL"]),

@@ -13,44 +13,44 @@ import { Badge } from "@/components/ui/badge"
 
 const metrics = [
   {
-    title: "Total Revenue",
-    value: "$54,230",
-    description: "Monthly revenue",
+    title: "Total Orders Today",
+    value: "142",
+    description: "Orders placed today",
     change: "+12%",
     trend: "up",
-    icon: DollarSign,
-    footer: "Trending up this month",
-    subfooter: "Revenue for the last 6 months"
+    icon: ShoppingCart,
+    footer: "Trending up this week",
+    subfooter: "Compared to yesterday"
   },
   {
-    title: "Active Customers",
-    value: "2,350",
-    description: "Total active users",
-    change: "+5.2%", 
+    title: "Pending vs Completed",
+    value: "45 / 97",
+    description: "Orders status",
+    change: "68% Done", 
     trend: "up",
     icon: Users,
-    footer: "Strong user retention",
-    subfooter: "Engagement exceeds targets"
+    footer: "Processing speed is good",
+    subfooter: "Average fulfillment: 2h"
   },
   {
-    title: "Total Orders",
-    value: "1,247",
-    description: "Orders this month",
-    change: "-2.1%",
+    title: "Low Stock Items",
+    value: "12",
+    description: "Items below threshold",
+    change: "-3",
     trend: "down", 
-    icon: ShoppingCart,
-    footer: "Down 2% this period",
-    subfooter: "Order volume needs attention"
+    icon: BarChart3,
+    footer: "Down 3 items today",
+    subfooter: "Check restock queue"
   },
   {
-    title: "Conversion Rate",
-    value: "3.24%",
-    description: "Average conversion",
+    title: "Revenue Today",
+    value: "$4,230",
+    description: "Total revenue today",
     change: "+8.3%",
     trend: "up",
-    icon: BarChart3,
-    footer: "Steady performance increase",
-    subfooter: "Meets conversion projections"
+    icon: DollarSign,
+    footer: "Steady performance",
+    subfooter: "Meets daily projections"
   },
 ]
 

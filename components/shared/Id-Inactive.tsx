@@ -18,7 +18,7 @@ const IdInactive = () => {
             Filling out all required details is necessary to access full functionality.
           </p>
           <Button 
-            onClick={() => router.push("/dashboard/settings/general")}
+            onClick={() => router.push("/manager/settings/general")}
             className="w-full"
           >
             Go to Settings

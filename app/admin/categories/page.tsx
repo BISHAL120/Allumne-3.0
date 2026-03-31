@@ -1,6 +1,13 @@
 import AllCategories from "@/components/admin/category/all/all-categories";
 import { getAllCategory } from "@/lib/data-layer/admin/admin";
 import { Category } from "@prisma/client";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Categories",
+  description: "Manage all categories",
+};
+
 
 const Page = async () => {
   const categories = await getAllCategory();

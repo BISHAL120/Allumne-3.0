@@ -2,6 +2,13 @@ import { AddProduct } from "@/components/admin/products/add/addproduct";
 import { getAllCategories } from "@/lib/data-layer/public/public";
 import { getProductDetailsById } from "@/lib/data-layer/public/public";
 import { Category, Product } from "@prisma/client";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Add Product",
+  description: "Add a new product",
+};
+
 
 const Page = async ({
   searchParams,

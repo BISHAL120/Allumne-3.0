@@ -2,6 +2,13 @@ import NewOrder from "@/components/admin/orders/new/newOrders";
 import React from "react";
 import { OrdersProps } from "../page";
 import { getOrders } from "@/lib/data-layer/admin/admin";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "New Order",
+  description: "Manage new orders",
+};
+
 
 const Page = async ({
   searchParams,
