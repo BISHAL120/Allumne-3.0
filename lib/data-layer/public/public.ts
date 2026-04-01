@@ -185,7 +185,7 @@ export const getProductDetailsById = cache(async (id: string) => {
 
   const product = await db.product.findUnique({
     where: {
-      slug: id
+      id
     },
     include: {
       user: {
@@ -323,14 +323,14 @@ export const getStoreDetailsById = cache(async (id: string) => {
 })
 
 
-export const getProductByArtistId = cache(async ({
-  artistId,
+export const getProductByuserId = cache(async ({
+  userId,
   page,
   per_page = 10,
   search,
   loadAll = false,
 }: {
-  artistId: string;
+  userId: string;
   page: number;
   per_page: number;
   search: string;
@@ -341,7 +341,7 @@ export const getProductByArtistId = cache(async ({
 
   const productCount = await db.product.count({
     where: {
-      artistId,
+      userId,
       isDeleted: false,
       status: "PUBLISHED",
       productName: {
@@ -354,7 +354,7 @@ export const getProductByArtistId = cache(async ({
   const hasNext = page < totalPage;
   const products = await db.product.findMany({
     where: {
-      artistId,
+      userId,
       isDeleted: false,
       status: "PUBLISHED",
       productName: {

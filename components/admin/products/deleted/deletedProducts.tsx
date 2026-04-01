@@ -173,7 +173,7 @@ export default function DeletedProducts({
                             {product.productName}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            by {product.artist?.name || "Unknown"}
+                            by {product.user?.name || "Unknown"}
                           </p>
                         </div>
                       </div>

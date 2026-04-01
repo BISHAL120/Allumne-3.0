@@ -296,26 +296,26 @@ export const getOrders = async ({ search, status, page, perPage: per_page }: { s
     const totalItems = await db.order.count({
         where: {
             status: status === "all" ? undefined : status as OrderStatus,
-            OR: [
-                {
-                    fullName: {
-                        contains: search,
-                        mode: "insensitive"
-                    }
-                },
-                {
-                    phone: {
-                        contains: search,
-                        mode: "insensitive"
-                    }
-                },
-                {
-                    email: {
-                        contains: search,
-                        mode: "insensitive"
-                    }
-                }
-            ]
+            // OR: [
+            //     {
+            //         fullName: {
+            //             contains: search,
+            //             mode: "insensitive"
+            //         }
+            //     },
+            //     {
+            //         phone: {
+            //             contains: search,
+            //             mode: "insensitive"
+            //         }
+            //     },
+            //     {
+            //         email: {
+            //             contains: search,
+            //             mode: "insensitive"
+            //         }
+            //     }
+            // ]
         }
     });
     const totalPage = Math.ceil(totalItems / per_page);
@@ -324,33 +324,31 @@ export const getOrders = async ({ search, status, page, perPage: per_page }: { s
     const orders = await db.order.findMany({
         where: {
             status: status === "all" ? undefined : status as OrderStatus,
-            OR: [
-                {
-                    fullName: {
+            // OR: [
+            //     {
+            //         fullName: {
 
-                        contains: search
+            //             contains: search
 
-                    }
-                },
-                {
-                    phone: {
-                        contains: search,
-                        mode: "insensitive"
-                    }
-                },
-                {
-                    email: {
-                        contains: search,
-                        mode: "insensitive"
-                    }
-                }
-            ]
+            //         }
+            //     },
+            //     {
+            //         phone: {
+            //             contains: search,
+            //             mode: "insensitive"
+            //         }
+            //     },
+            //     {
+            //         email: {
+            //             contains: search,
+            //             mode: "insensitive"
+            //         }
+            //     }
+            // ]
         },
         select: {
             id: true,
-            fullName: true,
-            phone: true,
-            email: true,
+           
             status: true,
             createdAt: true,
             cartItems: {
@@ -396,14 +394,10 @@ export const getOrderDetails = async ({ order_id }: { order_id: string }) => {
         select: {
             id: true,
             orderNumber: true,
-            fullName: true,
-            email: true,
-            phone: true,
-            fullAddress: true,
+           
             totalPrice: true,
             status: true,
-            customRequirements: true,
-            paymentScreenshot: true,
+          
             createdAt: true,
             cartItems: {
                 select: {
@@ -517,13 +511,10 @@ export const getOrderDetailsById = async (orderId: string) => {
         },
         select: {
             id: true,
-            fullName: true,
-            phone: true,
-            fullAddress: true,
-            email: true,
+           
             orderNumber: true,
             status: true,
-            customRequirements: true,
+           
             cartItems: {
                 select: {
                     id: true,

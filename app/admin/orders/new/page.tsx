@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   description: "Manage new orders",
 };
 
-
 const Page = async ({
   searchParams,
 }: {
@@ -30,7 +29,8 @@ const Page = async ({
   });
   return (
     <div>
-      <NewOrder orders={orders as OrdersProps[]} pagination={pagination} />
+      New Order Page
+      {/* <NewOrder orders={orders as OrdersProps[]} pagination={pagination} /> */}
     </div>
   );
 };

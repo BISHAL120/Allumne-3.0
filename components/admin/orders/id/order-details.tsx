@@ -42,12 +42,11 @@ const OrderDetails = ({ order }: OrderDetailsProps) => {
     switch (status) {
       case "DELIVERED":
         return "bg-green-100 text-green-800 hover:bg-green-100";
-      case "PROCESSING":
+      case "CONFIRMED":
         return "bg-blue-100 text-blue-800 hover:bg-blue-100";
       case "PENDING":
         return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
       case "CANCELLED":
-      case "REJECTED":
         return "bg-red-100 text-red-800 hover:bg-red-100";
       default:
         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
@@ -138,7 +137,7 @@ const OrderDetails = ({ order }: OrderDetailsProps) => {
                             <div className="flex flex-col text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <UserIcon className="w-3 h-3" />
-                                {item.artist}
+                                {item.user}
                               </span>
                               <span>Size: {item.size}</span>
                               <span>

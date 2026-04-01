@@ -59,17 +59,16 @@ export const auth = betterAuth({
             return {
               data: {
                 ...user,
-                role: state?.joinas === 'artist' ? ['USER', 'ARTIST'] : state?.joinas === "collector" ? ['USER', 'COLLECTOR'] : ['USER'],
+                role: state?.joinas === 'manager' ? ['USER', 'MANAGER'] : state?.joinas === "editor" ? ['USER', 'EDITOR'] : ['USER'],
               },
             };
           } else {
             const url = new URL(ctx?.headers?.get('referer') || '', 'http://localhost');
             const joinas = url.searchParams.get('joinas');
-            console.log("CTX Query from auth.ts: ", joinas);
             return {
               data: {
                 ...user,
-                role: joinas === 'artist' ? ['USER', 'ARTIST'] : joinas === "collector" ? ['USER', 'COLLECTOR'] : ['USER'],
+                role: joinas === 'manager' ? ['USER', 'MANAGER'] : joinas === "editor" ? ['USER', 'EDITOR'] : ['USER'],
               },
             };
           }

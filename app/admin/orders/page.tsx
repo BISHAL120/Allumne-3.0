@@ -36,7 +36,8 @@ const { orders, pagination } = await getOrders({ search, status, page: Number(pa
 
   return (
     <div>
-      <Orders orders={orders as OrdersProps[]} pagination={pagination} />
+      {/* <Orders orders={orders as OrdersProps[]} pagination={pagination} /> */}
+      Orders Page
     </div>
   );
 };

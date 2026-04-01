@@ -8,7 +8,8 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
 
   return (
     <div>
-        <EditOrder initialData={order} />
+      Edit Order Page
+        {/* <EditOrder initialData={order} /> */}
     </div>
   )
 }

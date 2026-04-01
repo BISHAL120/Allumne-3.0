@@ -99,6 +99,10 @@ export function AddProduct({
           totalStock: initialData.variants
             .reduce((acc, variant) => acc + (Number(variant.stock) || 0), 0)
             .toString(),
+          restockAlert: initialData.restockAlert
+            ? initialData.restockAlert
+            : false,
+          restockAlertThreshold: initialData.restockAlertThreshold?.toString() || "",
         }
       : {
           productName: "",
@@ -115,6 +119,8 @@ export function AddProduct({
             },
           ],
           totalStock: "0",
+          restockAlert: false,
+          restockAlertThreshold: "0",
           isFeatured: false,
           status: "PENDING",
           type: "PHYSICAL",
@@ -206,11 +212,13 @@ export function AddProduct({
           status: values.status || initialData.status,
           type: values.type || initialData.type,
           variants: values.variants || initialData.variants,
-          totalStock: values.totalStock,
+          totalStock: Number(values.totalStock),
           isFeatured: values.isFeatured || initialData.isFeatured,
           metaTitle: values.metaTitle || initialData.metaTitle,
           metaDescription:
             values.metaDescription || initialData.metaDescription,
+          restockAlert: values.restockAlert,
+          restockAlertThreshold: Number(values.restockAlertThreshold),
           images: initialImages || initialData.images,
         }),
       );
@@ -505,43 +513,66 @@ export function AddProduct({
               </Card>
 
               {/* Thumbnail Images Section */}
-              <Controller
-                name="thumbnail"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Card className="w-full">
-                    <CardHeader>
-                      <FieldLabel htmlFor="thumbnail-images">Thumbnail Images</FieldLabel>
-                      <CardDescription>
-                        Upload thumbnail images here
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <input
-                        ref={thumbnailInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleThumbnail(file);
-                        }}
-                      />
 
-                      {thumbnailURL ? (
+              <Card className="w-full">
+                <CardHeader>
+                  <FieldLabel htmlFor="thumbnail-images">
+                    Thumbnail Images
+                  </FieldLabel>
+                  <CardDescription>
+                    Upload thumbnail images here
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <input
+                    ref={thumbnailInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleThumbnail(file);
+                    }}
+                  />
+
+                  {thumbnailURL ? (
+                    <div className="">
+                      <div className="relative group">
+                        <Image
+                          width={200}
+                          height={200}
+                          src={thumbnailURL}
+                          alt="Thumbnail Image"
+                          className="w-87.5 h-87.5 rounded-lg object-contain border mx-auto"
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setThumbnailURL("");
+                          }}
+                          className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition-opacity"
+                          aria-label="Remove image"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      {thumbnailImage ? (
                         <div className="">
                           <div className="relative group">
                             <Image
                               width={200}
                               height={200}
-                              src={thumbnailURL}
+                              src={URL.createObjectURL(thumbnailImage)}
                               alt="Thumbnail Image"
                               className="w-87.5 h-87.5 rounded-lg object-contain border mx-auto"
                             />
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
-                                setThumbnailURL("");
+                                setThumbnailImage(null);
                               }}
                               className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition-opacity"
                               aria-label="Remove image"
@@ -551,82 +582,54 @@ export function AddProduct({
                           </div>
                         </div>
                       ) : (
-                        <div>
-                          {thumbnailImage ? (
-                            <div className="">
-                              <div className="relative group">
-                                <Image
-                                  width={200}
-                                  height={200}
-                                  src={URL.createObjectURL(thumbnailImage)}
-                                  alt="Thumbnail Image"
-                                  className="w-87.5 h-87.5 rounded-lg object-contain border mx-auto"
-                                />
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    setThumbnailImage(null);
-                                  }}
-                                  className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition-opacity"
-                                  aria-label="Remove image"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
+                        <div
+                          onDrop={(e) =>
+                            handleThumbnail(e.dataTransfer.files[0])
+                          }
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onClick={() => thumbnailInputRef.current?.click()}
+                          className={`relative border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300 ${
+                            isDragging
+                              ? "border-violet-500 bg-violet-50 scale-[1.02]"
+                              : "border-slate-300 hover:border-violet-400 hover:bg-slate-800"
+                          }`}
+                        >
+                          <div className="flex flex-col items-center gap-4">
                             <div
-                              onDrop={(e) =>
-                                handleThumbnail(e.dataTransfer.files[0])
-                              }
-                              onDragOver={handleDragOver}
-                              onDragLeave={handleDragLeave}
-                              onClick={() => thumbnailInputRef.current?.click()}
-                              className={`relative border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300 ${
-                                isDragging
-                                  ? "border-violet-500 bg-violet-50 scale-[1.02]"
-                                  : "border-slate-300 hover:border-violet-400 hover:bg-slate-800"
+                              className={`p-4 rounded-full transition-all duration-300 ${
+                                isDragging ? " scale-110" : "hover:bg-slate-800"
                               }`}
                             >
-                              <div className="flex flex-col items-center gap-4">
-                                <div
-                                  className={`p-4 rounded-full transition-all duration-300 ${
-                                    isDragging
-                                      ? " scale-110"
-                                      : "hover:bg-slate-800"
-                                  }`}
-                                >
-                                  <Upload
-                                    className={`w-8 h-8 ${
-                                      isDragging
-                                        ? "text-violet-600"
-                                        : "text-slate-400"
-                                    }`}
-                                  />
-                                </div>
-                                <div>
-                                  <p className="text-lg font-semibold text-slate-200 mb-1">
-                                    {isDragging
-                                      ? "Drop images here"
-                                      : "Click to upload or drag and drop"}
-                                  </p>
-                                  <p className="text-sm text-slate-400">
-                                    PNG, JPG, GIF up to 2MB each
-                                  </p>
-                                </div>
-                              </div>
+                              <Upload
+                                className={`w-8 h-8 ${
+                                  isDragging
+                                    ? "text-violet-600"
+                                    : "text-slate-400"
+                                }`}
+                              />
                             </div>
-                          )}
+                            <div>
+                              <p className="text-lg font-semibold text-slate-200 mb-1">
+                                {isDragging
+                                  ? "Drop images here"
+                                  : "Click to upload or drag and drop"}
+                              </p>
+                              <p className="text-sm text-slate-400">
+                                PNG, JPG, GIF up to 2MB each
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       )}
-                    </CardContent>
-                    <CardDescription className="w-full text-center text-slate-500">
-                      This image will be used in the product listing and product
-                      card.
-                    </CardDescription>
-                  </Card>
-                )}
-              />
+                    </div>
+                  )}
+                </CardContent>
+                <CardDescription className="w-full text-center text-slate-500">
+                  This image will be used in the product listing and product
+                  card.
+                </CardDescription>
+              </Card>
             </div>
 
             {/* Art Images Section */}
@@ -1240,7 +1243,7 @@ export function AddProduct({
 
             {/* Total Stock Field */}
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-6 space-y-6">
                 <Controller
                   name="totalStock"
                   control={form.control}
@@ -1271,6 +1274,60 @@ export function AddProduct({
                     </Field>
                   )}
                 />
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <Controller
+                    name="restockAlert"
+                    control={form.control}
+                    render={({ field }) => (
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label className="text-base font-semibold">
+                            Restock Alert
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Get notified when stock levels fall below a
+                            threshold
+                          </p>
+                        </div>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isLoading}
+                        />
+                      </div>
+                    )}
+                  />
+
+                  {form.watch("restockAlert") && (
+                    <Controller
+                      name="restockAlertThreshold"
+                      control={form.control}
+                      render={({ field, fieldState }) => (
+                        <Field>
+                          <FieldLabel className="font-semibold">
+                            Alert Threshold
+                          </FieldLabel>
+                          <Input
+                            {...field}
+                            type="number"
+                            disabled={isLoading}
+                            placeholder="10"
+                            className="bg-muted font-mono"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Set the minimum stock level to trigger an alert
+                          </p>
+                          {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                          )}
+                        </Field>
+                      )}
+                    />
+                  )}
+                </div>
               </CardContent>
             </Card>
 

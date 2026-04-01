@@ -65,11 +65,12 @@ export function SignInForm({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     toast.loading("Processing login...");
-    const { error } = await authClient.signIn.email({
+    const { error, data } = await authClient.signIn.email({
       email: values.email,
       password: values.password,
       rememberMe: rememberMe,
     });
+
     if (error) {
       toast.dismiss();
       setLoading(false);
@@ -87,7 +88,9 @@ export function SignInForm({
       message: "Login successful",
       duration: 5000,
     });
-    router.push("/manager/products");
+    
+    //@ts-expect-error
+    router.push(`${data.user?.role.includes("ADMIN") ? "/admin" : data.user?.role.includes("EDITOR") ? "/editor" : "/manager"}`);
   }
 
   return (

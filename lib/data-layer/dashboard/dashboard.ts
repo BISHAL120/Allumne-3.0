@@ -3,12 +3,12 @@ import { isArtist } from "../check-Access";
 import { getServerSession } from "@/lib/get-session";
 
 export const getArtistAllProducts = async ({
-    artistId,
+    userId,
     page,
     per_page,
     search,
 }: {
-    artistId: string;
+    userId: string;
     page: number;
     per_page: number;
     search: string;
@@ -18,7 +18,7 @@ export const getArtistAllProducts = async ({
     const totalItems = await db.product.count(
         {
             where: {
-                artistId,
+                userId,
                 isDeleted: false,
                 productName: {
                     contains: search,
@@ -31,7 +31,7 @@ export const getArtistAllProducts = async ({
     const hasNext = page < totalPage;
     const products = await db.product.findMany({
         where: {
-            artistId,
+            userId,
             isDeleted: false,
             productName: {
                 contains: search,
@@ -68,11 +68,11 @@ export const getArtistAllProducts = async ({
 };
 
 export const getArtistDeletedProducts = async ({
-    artistId,
+    userId,
     page,
     per_page,
 }: {
-    artistId: string;
+    userId: string;
     page: number;
     per_page: number;
 }) => {
@@ -81,7 +81,7 @@ export const getArtistDeletedProducts = async ({
     const productCount = await db.product.count(
         {
             where: {
-                artistId,
+                userId,
                 isDeleted: true,
             },
         }
@@ -90,7 +90,7 @@ export const getArtistDeletedProducts = async ({
     const hasNext = page < totalPage;
     const products = await db.product.findMany({
         where: {
-            artistId,
+            userId,
             isDeleted: true,
         },
         include: {
@@ -116,11 +116,11 @@ export const getArtistDeletedProducts = async ({
 };
 
 export const getProductDetailsForPromotion = async ({
-    artistId,
+    userId,
     page,
     per_page,
 }: {
-    artistId: string;
+    userId: string;
     page: number;
     per_page: number;
 }) => {
@@ -129,7 +129,7 @@ export const getProductDetailsForPromotion = async ({
     const totalItems = await db.product.count(
         {
             where: {
-                artistId,
+                userId,
                 isDeleted: false,
             },
         }
@@ -139,7 +139,7 @@ export const getProductDetailsForPromotion = async ({
 
     const products = await db.product.findMany({
         where: {
-            artistId,
+            userId,
             isDeleted: false,
         },
         select: {

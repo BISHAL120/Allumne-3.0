@@ -121,7 +121,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
       <Card className="shadow-lg border-2 border-primary/10 overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-primary/50 via-primary to-primary/50" />
         <CardHeader className="text-center pb-2">
-          <div className="mx-auto bg-primary/10 w-14 h-14 rounded-2xl flex items-center justify-center mb-4 rotate-3 hover:rotate-0 transition-transform duration-300">
+          <div className="mx-auto bg-primary/10 w-14 h-14 flex items-center justify-center mb-4 rotate-3 hover:rotate-0 transition-transform duration-300">
             <Sparkles className="w-7 h-7 text-primary" />
           </div>
           <CardTitle className="text-2xl font-black tracking-tight">
@@ -135,7 +135,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
         <CardContent className="space-y-8 pt-6">
           <div className="space-y-4">
             <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px]">
+              <span className="flex items-center justify-center w-5 h-5 bg-primary/10 text-primary text-[10px]">
                 1
               </span>
               Target Category
@@ -147,7 +147,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
               onInputValueChange={setSearchQuery}
             >
               <div className="relative group">
-                <ComboboxChips className="min-h-14 w-full rounded-2xl border-2 border-primary/10 bg-muted/20 px-4 py-2 transition-all focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary/30 overflow-hidden group">
+                <ComboboxChips className="min-h-14 w-full border-2 border-primary/10 bg-muted/20 px-4 py-2 transition-all focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary/30 overflow-hidden group">
                   <AnimatePresence mode="popLayout">
                     {selectedCategory && (
                       <motion.div
@@ -156,7 +156,10 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
                         exit={{ opacity: 0, scale: 0.8, x: -20 }}
                         key="selected-chip"
                       >
-                        <ComboboxChip className="bg-primary text-primary-foreground font-bold rounded-xl px-4 py-1.5 h-auto flex items-center gap-2 shadow-lg shadow-primary/20 border-none group/chip">
+                        <ComboboxChip
+                          showRemove={false}
+                          className="bg-primary text-primary-foreground font-bold px-4 py-1.5 h-auto flex items-center gap-2 shadow-lg shadow-primary/20 border-none group/chip"
+                        >
                           <FolderTree className="w-3.5 h-3.5" />
                           <span>{selectedCategory.name}</span>
                           <button
@@ -165,7 +168,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
                               e.stopPropagation();
                               setSelectedCategoryId(null);
                             }}
-                            className="ml-1 hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                            className="-mr-2 hover:bg-white/20 p-0.5 transition-colors"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -174,21 +177,16 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
                     )}
                   </AnimatePresence>
                   <ComboboxChipsInput
+                    disabled={selectedCategory !== undefined}
                     placeholder={
                       !selectedCategory ? "Search and select category..." : ""
                     }
-                    className="text-base font-medium placeholder:text-muted-foreground/50 h-full py-2"
+                    className={`text-base font-medium placeholder:text-muted-foreground/50 h-full py-2 ${selectedCategory ? "ml-4" : "ml-0"}`}
                   />
-                  <div className="ml-auto flex items-center gap-2">
-                    <div className="h-6 w-px bg-primary/10" />
-                    <ComboboxTrigger className="p-2 hover:bg-primary/5 rounded-lg transition-colors text-primary/60 group-focus-within:text-primary">
-                      <Search className="w-5 h-5" />
-                    </ComboboxTrigger>
-                  </div>
                 </ComboboxChips>
               </div>
 
-              <ComboboxContent className="z-100 min-w-(--anchor-width) p-2 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border-primary/10 bg-popover/95 backdrop-blur-xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-4 duration-300">
+              <ComboboxContent className="z-100 min-w-(--anchor-width) p-2 shadow-[0_20px_50px_rgba(0,0,0,0.2)] border-primary/10 bg-popover/95 backdrop-blur-xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-4 duration-300">
                 <div className="px-3 py-2 mb-2 border-b border-primary/5">
                   <p className="text-[10px] font-black uppercase tracking-widest text-primary/40">
                     {searchQuery ? "Search Results" : "Available Categories"}
@@ -200,7 +198,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
                       <ComboboxItem
                         key={category.id}
                         value={category.id}
-                        className="py-3 px-4 flex flex-col items-start gap-1 rounded-xl transition-all hover:bg-primary/5 data-highlighted:bg-primary/10 data-selected:bg-primary/20 group relative overflow-hidden"
+                        className="py-3 px-4 flex flex-col items-start gap-1 transition-all hover:bg-primary/5 data-highlighted:bg-primary/10 data-selected:bg-primary/20 group relative overflow-hidden"
                       >
                         <div className="flex items-center justify-between w-full">
                           <span className="font-bold text-sm tracking-tight group-data-selected:text-primary">
@@ -211,7 +209,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
                               layoutId="active-check"
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
-                              className="bg-primary/10 p-1 rounded-full"
+                              className="bg-primary/10 p-1"
                             >
                               <Check className="w-3 h-3 text-primary" />
                             </motion.div>
@@ -229,7 +227,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
                           </span>
                         </div>
                         {/* Hover decoration */}
-                        <div className="absolute top-0 right-0 w-12 h-12 bg-primary/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 opacity-0 group-data-highlighted:opacity-100 transition-opacity" />
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-primary/5 blur-2xl -translate-y-1/2 translate-x-1/2 opacity-0 group-data-highlighted:opacity-100 transition-opacity" />
                       </ComboboxItem>
                     ))
                   ) : (
@@ -245,7 +243,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
                             repeat: Infinity,
                             ease: "easeInOut",
                           }}
-                          className="bg-muted w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner"
+                          className="bg-muted w-16 h-16 flex items-center justify-center shadow-inner"
                         >
                           <Search className="w-7 h-7 opacity-20" />
                         </motion.div>
@@ -271,7 +269,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
               htmlFor="product-count"
               className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2"
             >
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px]">
+              <span className="flex items-center justify-center w-5 h-5 bg-primary/10 text-primary text-[10px]">
                 2
               </span>
               Product Quantity
@@ -289,17 +287,17 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
                   }
                   className="w-full h-12 text-xl font-black text-center sm:text-left pr-16 bg-muted/20 border-primary/10 focus-visible:ring-primary/20"
                 />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-primary font-bold pointer-events-none text-xs bg-primary/5 px-2 py-1 rounded">
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-primary font-bold pointer-events-none text-xs bg-primary/5 px-2 py-1">
                   ITEMS
                 </div>
               </div>
-              <div className="flex sm:flex-col items-center sm:items-start justify-between sm:justify-center px-4 py-2 sm:p-0 bg-muted/30 sm:bg-transparent rounded-lg text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
+              <div className="flex sm:flex-col items-center sm:items-start justify-between sm:justify-center px-4 py-2 sm:p-0 bg-muted/30 sm:bg-transparent text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
                 <span className="flex items-center gap-1">
-                  <div className="w-1 h-1 rounded-full bg-green-500" />
+                  <div className="w-1 h-1 bg-green-500" />
                   Recommended: 10-20
                 </span>
                 <span className="flex items-center gap-1">
-                  <div className="w-1 h-1 rounded-full bg-red-500" />
+                  <div className="w-1 h-1 bg-red-500" />
                   Max Limit: 50
                 </span>
               </div>
@@ -350,7 +348,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
               </div>
               <Badge
                 variant="outline"
-                className="px-4 py-1.5 rounded-full font-bold bg-primary/5 border-primary/20 text-primary"
+                className="px-4 py-1.5 font-bold bg-primary/5 border-primary/20 text-primary"
               >
                 {generatedProducts.length} Items Created
               </Badge>
@@ -363,9 +361,9 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="group bg-card hover:bg-muted/30 transition-all border border-primary/5 hover:border-primary/20 rounded-2xl p-3 flex items-center gap-4 relative overflow-hidden"
+                  className="group bg-card hover:bg-muted/30 transition-all border border-primary/5 hover:border-primary/20 p-3 flex items-center gap-4 relative overflow-hidden"
                 >
-                  <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-muted shadow-inner border border-primary/5">
+                  <div className="relative w-16 h-16 overflow-hidden shrink-0 bg-muted shadow-inner border border-primary/5">
                     <img
                       src={product.thumbnail}
                       alt={product.productName}
@@ -397,7 +395,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded-full bg-primary/10 flex items-center justify-center">
+                        <div className="w-3 h-3 bg-primary/10 flex items-center justify-center">
                           <span className="text-[8px] font-bold text-primary">
                             $
                           </span>
@@ -413,7 +411,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
                   </div>
 
                   <div className="opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0 pr-2">
-                    <div className="bg-primary/10 p-2 rounded-full">
+                    <div className="bg-primary/10 p-2">
                       <ChevronRight className="w-4 h-4 text-primary" />
                     </div>
                   </div>
@@ -427,7 +425,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
             <Button
               variant="outline"
               onClick={() => setGeneratedProducts([])}
-              className="w-full border-dashed border-2 hover:border-primary/30 hover:bg-primary/5 rounded-2xl h-12 font-bold text-muted-foreground hover:text-primary transition-all"
+              className="w-full border-dashed border-2 hover:border-primary/30 hover:bg-primary/5 h-12 font-bold text-muted-foreground hover:text-primary transition-all"
             >
               Clear Batch History
             </Button>
@@ -460,7 +458,7 @@ const GenerateProducts = ({ categories }: GenerateProductsProps) => {
         ].map((feat, i) => (
           <div
             key={i}
-            className="bg-card hover:bg-muted/50 transition-colors rounded-2xl p-4 border border-border/50 flex items-start gap-4 group"
+            className="bg-card hover:bg-muted/50 transition-colors p-4 border border-border/50 flex items-start gap-4 group"
           >
             <div className="text-2xl grayscale group-hover:grayscale-0 transition-all">
               {feat.icon}

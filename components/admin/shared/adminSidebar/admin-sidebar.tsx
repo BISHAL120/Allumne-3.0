@@ -4,6 +4,7 @@ import {
   AudioWaveform,
   BoxIcon,
   Brush,
+  Cable,
   ChartColumnBig,
   Command,
   Database,
@@ -97,13 +98,13 @@ const data = {
       icon: Package,
       isActive: false,
       items: [
-        { title: "Add Product", url: "/admin/products/add", icon: PlusSquare },
-        { title: "All Products", url: "/admin/products", icon: ListOrdered },
         {
           title: "Restock Queue",
           url: "/admin/products/restock",
           icon: ShieldAlertIcon,
         },
+        { title: "Add Product", url: "/admin/products/add", icon: PlusSquare },
+        { title: "All Products", url: "/admin/products", icon: ListOrdered },
         {
           title: "Pending Products",
           url: "/admin/products/pending",
@@ -118,6 +119,21 @@ const data = {
           title: "Deleted Products",
           url: "/admin/products/deleted",
           icon: Trash2,
+        },
+      ],
+    },
+    {
+      title: "Generator",
+      url: "#",
+      icon: Cable,
+      items: [
+        {
+          title: "Products",
+          url: "/admin/generator/products",
+        },
+        {
+          title: "Category",
+          url: "/admin/generator/category",
         },
       ],
     },

@@ -17,7 +17,8 @@ const Page = async ({
 const { orders, pagination } = await getOrders({ search, status, page: Number(page), perPage: Number(perPage) });
   return (
     <div>
-        <ProcessingOrdersPage orders={orders as OrdersProps[]} pagination={pagination} />
+        {/* <ProcessingOrdersPage orders={orders as OrdersProps[]} pagination={pagination} /> */}
+        Processing Orders Page
     </div>
   )
 }

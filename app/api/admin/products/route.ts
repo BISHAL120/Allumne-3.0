@@ -93,9 +93,9 @@ export async function POST(request: Request) {
     const newSlug = uniqueSlug;
 
     const session = await getServerSession();
-    const artistId = session?.user.id;
+    const userId = session?.user?.id;
 
-    if (!artistId) {
+    if (!userId) {
       return NextResponse.json(
         { message: "Unauthorized Request" },
         { status: 400 }
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
 
     const product = await db.product.create({
       data: {
-        artistId,
+        userId,
         productName,
         shortDescription,
         categoryId,

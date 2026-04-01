@@ -8,7 +8,7 @@ interface OrderItem {
   id: string;
   thumbnail: string;
   title: string;
-  artist: string;
+  user: string;
   size: string;
   price: string;
   quantity: number;
@@ -23,7 +23,7 @@ export interface SingleOrderProps {
   phone: string;
   fullAddress: string;
   totalPrice: string;
-  status: "PENDING" | "PROCESSING" | "DELIVERED" | "RETURNED" | "CANCELLED" | "REJECTED";
+  status: "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
   customRequirements?: string | null;
   paymentScreenshot?: string | null;
   cartItems: OrderItem[];
@@ -42,7 +42,8 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
 
   return (
     <div className="min-h-screen">
-      <OrderDetails order={order as SingleOrderProps} />
+      Order Details Page
+      {/* <OrderDetails order={order as SingleOrderProps} /> */}
     </div>
   );
 };

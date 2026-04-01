@@ -141,26 +141,28 @@ type ImageObj {
 }
 
 model Product {
-  id               String           @id @default(auto()) @map("_id") @db.ObjectId
-  productName      String
-  shortDescription String?
-  fullDescription  String
-  slug             String           @unique
-  status           ProductStatus    @default(PENDING)
-  type             productType      @default(PHYSICAL)
-  variants         ProductVariant[]
-  totalStock       Int              @default(0)
-  images           ImageObj[]
-  thumbnail        String?
-  totalSold        Int              @default(0)
-  sortingNumber    Int?             @default(0)
-  isDeleted        Boolean          @default(false)
-  isFeatured       Boolean          @default(false)
-  promotionEnd     DateTime?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  metaTitle        String?
-  metaDescription  String?
+  id                    String           @id @default(auto()) @map("_id") @db.ObjectId
+  productName           String
+  shortDescription      String?
+  fullDescription       String
+  slug                  String           @unique
+  status                ProductStatus    @default(PENDING)
+  type                  productType      @default(PHYSICAL)
+  variants              ProductVariant[]
+  totalStock            Int              @default(0)
+  restockAlert          Boolean          @default(false)
+  restockAlertThreshold Int?
+  images                ImageObj[]
+  thumbnail             String?
+  totalSold             Int              @default(0)
+  sortingNumber         Int?             @default(0)
+  isDeleted             Boolean          @default(false)
+  isFeatured            Boolean          @default(false)
+  promotionEnd          DateTime?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  metaTitle             String?
+  metaDescription       String?
 
   user       User       @relation(fields: [userId], references: [id])
   userId     String
@@ -195,17 +197,27 @@ enum OrderStatus {
 }
 
 model Order {
-  id                 String      @id @default(auto()) @map("_id") @db.ObjectId
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  totalPrice  String
+  orderNumber String
+
+  customerId String
+  customer   Customer    @relation(fields: [customerId], references: [id])
+  status     OrderStatus @default(PENDING)
+  cartItems  CartItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Customer {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
   fullName           String
   phone              String
   fullAddress        String
-  totalPrice         String
-  orderNumber        String
   email              String?
   paymentScreenshot  String?
   customRequirements String?
-  status             OrderStatus @default(PENDING)
-  cartItems          CartItem[]
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  orders             Order[]
 }

@@ -21,6 +21,8 @@ export const formSchema = z.object({
         })
     ).optional(),
     totalStock: z.string().min(1, "Total stock must be 1 or more"),
+    restockAlert: z.boolean(),
+    restockAlertThreshold: z.string().optional(),
     isFeatured: z.boolean(),
     status: z.enum(["PUBLISHED", "PENDING", "DRAFT", "DELETED"]),
     type: z.enum(["PHYSICAL", "DIGITAL"]),
