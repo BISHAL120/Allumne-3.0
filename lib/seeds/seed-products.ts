@@ -26,17 +26,17 @@ export const generateProducts = async ({
     const variants = [
       {
         size: "Small",
-        price: (Math.floor(Math.random() * 50) + 10).toString(),
-        stock: (Math.floor(Math.random() * 100) + 10).toString(),
+        price: (Math.floor(Math.random() * 50) + 10),
+        stock: (Math.floor(Math.random() * 100) + 10),
         discountType: DiscountType.NONE,
-        discountPrice: "0",
+        discountPrice: 0,
       },
       {
         size: "Large",
-        price: (Math.floor(Math.random() * 100) + 50).toString(),
-        stock: (Math.floor(Math.random() * 50) + 5).toString(),
+        price: (Math.floor(Math.random() * 100) + 50),
+        stock: (Math.floor(Math.random() * 50) + 5),
         discountType: DiscountType.FIXED,
-        discountPrice: (Math.floor(Math.random() * 10) + 1).toString(),
+        discountPrice: (Math.floor(Math.random() * 10) + 1),
       },
     ];
 

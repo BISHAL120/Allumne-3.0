@@ -6,10 +6,10 @@ export const cartItemSchema = z.object({
   productId: z.string().min(1, "Product ID is required"),
   title: z.string().min(1, "Title is required"),
   size: z.string().min(1, "Size is required"),
-  price: z.string().min(1, "Price is required"),
+  price: z.number().min(1, "Price is required"),
   quantity: z.number().min(1, "Quantity must be at least 1"),
   thumbnail: z.string().optional().or(z.literal("")),
-  subTotal: z.string().optional(),
+  subTotal: z.number().optional(),
   user: z.object({
     name: z.string().optional().or(z.literal("")),
     phoneNumber: z.string().optional().or(z.literal("")),
@@ -29,7 +29,7 @@ export const customerSchema = z.object({
 
 export const orderStatusSchema = z.object({
   status: z.enum(["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"]),
-  totalPrice: z.string().optional(),
+  totalPrice: z.number().optional(),
   customRequirements: z.string().optional().or(z.literal("")),
 });
 

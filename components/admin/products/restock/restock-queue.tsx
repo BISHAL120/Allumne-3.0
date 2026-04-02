@@ -1,59 +1,53 @@
 "use client"
 
-import { useState } from "react"
-import { Package, Plus, Trash2, AlertTriangle, AlertCircle, Info } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Package, Plus, Trash2, AlertTriangle, AlertCircle, Info, Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import PageTitle from "../../shared/pageTittle"
+import { getLowStockProducts, restockProduct } from "@/lib/actions/restock-queue"
+import { toast } from "sonner"
 
-// Mock data: Ordered by lowest stock first
-const initialQueue = [
-  {
-    id: 1,
-    name: "MacBook Pro M2",
-    sku: "LAP-MBP-001",
-    currentStock: 0,
-    threshold: 5,
-    category: "Electronics",
-    priority: "High",
-  },
-  {
-    id: 2,
-    name: "iPhone 13",
-    sku: "MOB-IP13-002",
-    currentStock: 3,
-    threshold: 10,
-    category: "Electronics",
-    priority: "High",
-  },
-  {
-    id: 3,
-    name: "Nike Sneakers",
-    sku: "SHOE-NK-005",
-    currentStock: 4,
-    threshold: 8,
-    category: "Footwear",
-    priority: "Medium",
-  },
-  {
-    id: 4,
-    name: "Cotton T-Shirt",
-    sku: "CLO-TS-012",
-    currentStock: 8,
-    threshold: 15,
-    category: "Clothing",
-    priority: "Low",
-  },
-]
+interface QueueItem {
+  id: string;
+  name: string;
+  sku: string;
+  currentStock: number;
+  threshold: number;
+  category: string;
+  priority: string;
+}
 
 export default function RestockQueue() {
-  const [queue, setQueue] = useState(initialQueue)
-  const [restockAmounts, setRestockAmounts] = useState<Record<number, number>>({})
+  const [queue, setQueue] = useState<QueueItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [restockAmounts, setRestockAmounts] = useState<Record<string, number>>({})
+  const [isRestocking, setIsRestocking] = useState<Record<string, boolean>>({})
 
-  const handleRestockAmountChange = (id: number, amount: string) => {
+  useEffect(() => {
+    fetchQueue()
+  }, [])
+
+  const fetchQueue = async () => {
+    try {
+      setIsLoading(true)
+      const result = await getLowStockProducts()
+      if (result.success && result.queue) {
+        setQueue(result.queue)
+      } else {
+        toast.error(result.error || "Failed to load restock queue")
+      }
+    } catch (error) {
+      toast.error("Something went wrong loading the queue")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleRestockAmountChange = (id: string, amount: string) => {
     const val = parseInt(amount, 10)
     if (!isNaN(val) && val > 0) {
       setRestockAmounts((prev) => ({ ...prev, [id]: val }))
@@ -64,21 +58,46 @@ export default function RestockQueue() {
     }
   }
 
-  const handleRestock = (id: number) => {
+  const handleRestock = async (id: string) => {
     const amount = restockAmounts[id]
     if (!amount) return
 
-    // Remove item from queue once restocked, simulating a successful restock action
-    setQueue((prev) => prev.filter((item) => item.id !== id))
-    
-    // Clear the input
-    const newAmounts = { ...restockAmounts }
-    delete newAmounts[id]
-    setRestockAmounts(newAmounts)
+    try {
+      setIsRestocking((prev) => ({ ...prev, [id]: true }))
+      const result = await restockProduct(id, amount)
+
+      if (result.success) {
+        toast.success(`Successfully restocked ${amount} items`)
+        
+        // Remove item from queue once restocked if it's now above threshold
+        // Or we could just refetch the queue to be accurate
+        const item = queue.find(q => q.id === id)
+        if (item && (item.currentStock + amount > item.threshold || 10)) {
+           setQueue((prev) => prev.filter((i) => i.id !== id))
+        } else {
+           // If it's still below threshold after restock, just update the stock in UI
+           setQueue((prev) => prev.map(i => i.id === id ? { ...i, currentStock: i.currentStock + amount } : i))
+        }
+        
+        // Clear the input
+        const newAmounts = { ...restockAmounts }
+        delete newAmounts[id]
+        setRestockAmounts(newAmounts)
+      } else {
+        toast.error(result.error || "Failed to restock product")
+      }
+    } catch (error) {
+      toast.error("Something went wrong restocking the product")
+    } finally {
+      setIsRestocking((prev) => ({ ...prev, [id]: false }))
+    }
   }
 
-  const handleRemove = (id: number) => {
+  const handleRemove = (id: string) => {
+    // In a real app, this might dismiss the alert or ignore it temporarily.
+    // Here we just remove it from the local UI state.
     setQueue((prev) => prev.filter((item) => item.id !== id))
+    toast.info("Removed from current queue view")
   }
 
   const getPriorityIcon = (priority: string) => {
@@ -117,7 +136,11 @@ export default function RestockQueue() {
           <CardDescription>Items below their minimum stock threshold. Ordered by lowest stock first.</CardDescription>
         </CardHeader>
         <CardContent>
-          {queue.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : queue.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="mx-auto h-12 w-12 mb-4 text-muted" />
               <p>No items currently need restocking. Inventory is healthy.</p>
@@ -176,9 +199,13 @@ export default function RestockQueue() {
                             size="sm" 
                             variant="default"
                             onClick={() => handleRestock(item.id)}
-                            disabled={!restockAmounts[item.id]}
+                            disabled={!restockAmounts[item.id] || isRestocking[item.id]}
                           >
-                            <Plus className="w-4 h-4 mr-1" />
+                            {isRestocking[item.id] ? (
+                              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                            ) : (
+                              <Plus className="w-4 h-4 mr-1" />
+                            )}
                             Restock
                           </Button>
                           <Button 
@@ -186,6 +213,7 @@ export default function RestockQueue() {
                             variant="ghost" 
                             className="text-destructive hover:text-destructive"
                             onClick={() => handleRemove(item.id)}
+                            disabled={isRestocking[item.id]}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

@@ -85,10 +85,10 @@ export function AddProduct({
           slug: initialData.slug || "",
           variants: initialData.variants.map((variant) => ({
             size: variant.size,
-            price: variant.price,
-            stock: variant?.stock || "",
+            price: variant.price || 0,
+            stock: variant?.stock || 0,
             discountType: variant.discountType || "NONE",
-            discountPrice: variant.discountPrice || "",
+            discountPrice: variant.discountPrice || 0,
           })),
           isFeatured: initialData.isFeatured ? initialData.isFeatured : false,
           status: initialData.status || "PENDING",
@@ -96,13 +96,15 @@ export function AddProduct({
           metaTitle: initialData.metaTitle || "",
           metaDescription: initialData.metaDescription || "",
           categoryId: initialData.categoryId || "",
-          totalStock: initialData.variants
-            .reduce((acc, variant) => acc + (Number(variant.stock) || 0), 0)
-            .toString(),
+          totalStock: initialData.variants.reduce(
+            (acc, variant) => acc + (Number(variant.stock) || 0),
+            0,
+          ),
           restockAlert: initialData.restockAlert
             ? initialData.restockAlert
             : false,
-          restockAlertThreshold: initialData.restockAlertThreshold?.toString() || "",
+          restockAlertThreshold:
+            initialData.restockAlertThreshold?.toString() || "",
         }
       : {
           productName: "",
@@ -112,13 +114,13 @@ export function AddProduct({
           variants: [
             {
               size: "",
-              price: "",
-              stock: "",
+              price: 0,
+              stock: 0,
               discountType: "NONE",
-              discountPrice: "",
+              discountPrice: 0,
             },
           ],
-          totalStock: "0",
+          totalStock: 0,
           restockAlert: false,
           restockAlertThreshold: "0",
           isFeatured: false,
@@ -164,7 +166,7 @@ export function AddProduct({
         const total = variants.reduce((acc, variant) => {
           return acc + (Number(variant?.stock) || 0);
         }, 0);
-        form.setValue("totalStock", total.toString());
+        form.setValue("totalStock", total);
       }
     });
     return () => subscription.unsubscribe();
@@ -1085,6 +1087,9 @@ export function AddProduct({
                                   <Input
                                     {...field}
                                     disabled={isLoading}
+                                    onChange={(e) => {
+                                      field.onChange(Number(e.target.value));
+                                    }}
                                     placeholder="Enter price"
                                   />
 
@@ -1104,6 +1109,10 @@ export function AddProduct({
 
                                   <Input
                                     {...field}
+                                    type="number"
+                                    onChange={(e) => {
+                                      field.onChange(Number(e.target.value));
+                                    }}
                                     disabled={isLoading}
                                     placeholder="Enter stock"
                                   />
@@ -1180,7 +1189,7 @@ export function AddProduct({
                                         (Number(val) <= price &&
                                           !isNaN(Number(val)))
                                       ) {
-                                        field.onChange(val);
+                                        field.onChange(Number(val));
                                       }
                                     }}
                                     placeholder="Enter discount price"

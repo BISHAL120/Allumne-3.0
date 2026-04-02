@@ -119,10 +119,10 @@ enum DiscountType {
 
 type ProductVariant {
   size          String
-  price         String
-  stock         String?
+  price         Int
+  stock         Int?
   discountType  DiscountType?
-  discountPrice String?
+  discountPrice Int?
 }
 
 enum ProductStatus {
@@ -178,8 +178,8 @@ model CartItem {
   title     String
   thumbnail String
   size      String
-  price     String
-  subTotal  String
+  price     Int
+  subTotal  Int
   quantity  Int
   userId    String
   user      User   @relation(fields: [userId], references: [id])
@@ -202,7 +202,7 @@ enum OrderStatus {
 
 model Order {
   id                 String      @id @default(auto()) @map("_id") @db.ObjectId
-  totalPrice         String
+  totalPrice         Int
   orderNumber        String
   customRequirements String?
   customerId         String      @db.ObjectId

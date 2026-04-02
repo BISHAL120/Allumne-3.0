@@ -18,7 +18,7 @@ export interface OrdersProps {
     product: {
       productName: string;
     };
-    subTotal: string;
+    subTotal: number;
     quantity: number;
   }[];
 }

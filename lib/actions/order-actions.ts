@@ -118,7 +118,7 @@ export async function createOrder(
       const order = await tx.order.create({
         data: {
           orderNumber: nextOrderNumber,
-          totalPrice: orderData.summary.total.toString(),
+          totalPrice: orderData.summary.total,
           customerId: customerId,
           userId: orderData.userId,
           status: "PENDING",
@@ -155,7 +155,7 @@ export async function createOrder(
         const updatedVariants = product.variants.map((variant) => {
           if (variant.size === item.size) {
             variantFound = true;
-            const currentStock = parseInt(variant.stock || "0");
+            const currentStock = variant.stock || 0;
 
             if (currentStock < item.quantity) {
               throw new Error(`Insufficient stock for product "${item.name}" (Size: ${item.size}). Available: ${currentStock}, Requested: ${item.quantity}`);
@@ -164,7 +164,7 @@ export async function createOrder(
             const newStock = currentStock - item.quantity;
             return {
               ...variant,
-              stock: newStock.toString(),
+              stock: newStock,
             };
           }
           return variant;
@@ -193,8 +193,8 @@ export async function createOrder(
             title: item.name,
             thumbnail: product.thumbnail || "",
             size: item.size || "N/A",
-            price: item.price.toString(),
-            subTotal: item.total.toString(),
+            price: item.price,
+            subTotal: item.total,
             quantity: item.quantity,
             userId: orderData.userId,
             orderId: order.id,
@@ -228,10 +228,10 @@ export const updateCartItems = async ({
 }: {
   orderId: string;
   totalPrice: string | number;
-  changedItems: CartItemFormValues[];
+  changedItems: (CartItemFormValues & { changedQuantity: number })[];
 }) => {
 
-  const normalizedTotalPrice = Number(totalPrice).toFixed(2);
+  const normalizedTotalPrice = Number(totalPrice);
 
   const result = await db.$transaction(async (tx) => {
     const updatedOrder = await tx.order.update({
@@ -256,11 +256,61 @@ export const updateCartItems = async ({
           id: item.id,
         },
         data: {
-          price: Number(item.price).toFixed(2),
+          price: Number(item.price),
           quantity: item.quantity,
-          subTotal: (Number(item.price) * item.quantity).toFixed(2),
+          subTotal: Number(item.price) * item.quantity,
         }
       });
+
+      // increase or Decrease the stock of the variant and also increase or decrease the total stock and total sold
+
+      // 1. get the product
+      const product = await tx.product.findUnique({
+        where: { id: item.productId },
+        select: {
+          productName: true,
+          variants: true,
+          totalStock: true,
+          totalSold: true,
+        }
+      });
+
+      if (!product || !product.variants) {
+        throw new Error(`Product or variant with ID ${item.productId} not found.`);
+      }
+
+      // 2. check if the requested variant stock available
+      const variant = product.variants.find((v) => v.size === item.size);
+      if(variant?.stock && variant?.stock < item.changedQuantity) {
+        throw new Error(`Insufficient stock for product "${product.productName}" (Size: ${item.size}). Available: ${variant?.stock || 0}, Requested: ${item.changedQuantity}`);
+      }
+
+
+      // 3. update the variant stock
+      const updatedVariants = product.variants.map((variant) => {
+        if (variant.size === item.size && variant?.stock) {
+          return {
+            ...variant,
+            stock: variant?.stock - item.changedQuantity,
+          };
+        }
+        return variant;
+      });
+
+      // 4. update the product stock and total sold
+      const newTotalStock = Math.max(0, product.totalStock - item.changedQuantity);
+      const newTotalSold = product.totalSold + item.changedQuantity;
+
+      // 5. update the product
+      await tx.product.update({
+        where: { id: item.productId },
+        data: {
+          variants: updatedVariants,
+          totalStock: newTotalStock,
+          totalSold: newTotalSold,
+        },
+      });
+
 
     }
 

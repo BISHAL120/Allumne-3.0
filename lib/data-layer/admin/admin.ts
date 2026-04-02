@@ -292,8 +292,6 @@ export const getCategoryDetailsById = async (categoryId: string) => {
 export const getOrders = async ({ search, status, page, perPage: per_page }: { search: string, status: string, page: number, perPage: number }) => {
     await isAdmin();
 
-    console.log("Order Search", search)
-
     const skip = (page - 1) * per_page;
     const totalItems = await db.order.count({
         where: {
@@ -383,7 +381,7 @@ export const getOrders = async ({ search, status, page, perPage: per_page }: { s
     })
 
     return {
-        orders,
+         orders,
         pagination: {
             totalItems,
             totalPage,

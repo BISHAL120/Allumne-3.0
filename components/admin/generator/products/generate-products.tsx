@@ -52,7 +52,7 @@ interface GeneratedProduct {
   thumbnail: string;
   totalStock: number;
   variants: {
-    price: string;
+    price: number;
   }[];
 }
 

@@ -14,13 +14,13 @@ export const formSchema = z.object({
     variants: z.array(
         z.object({
             size: z.string().optional(),
-            price: z.string().optional(),
-            stock: z.string().optional(),
+            price: z.number().optional(),
+            stock: z.number().optional(),
             discountType: z.enum(["FIXED", "NONE"]).optional(),
-            discountPrice: z.string().optional(),
+            discountPrice: z.number().optional(),
         })
     ).optional(),
-    totalStock: z.string().min(1, "Total stock must be 1 or more"),
+    totalStock: z.number().min(1, "Total stock must be 1 or more"),
     restockAlert: z.boolean(),
     restockAlertThreshold: z.string().optional(),
     isFeatured: z.boolean(),

@@ -47,13 +47,14 @@ import {
   updateOrderStatus,
 } from "@/lib/actions/order-actions";
 import { toast } from "sonner";
+import Error from "next/error";
 
 interface EditOrderProps {
   initialData: {
     id: string;
     orderNumber: string;
     status: "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
-    totalPrice: string;
+    totalPrice: number;
     customRequirements?: string | null;
     customer: {
       id: string;
@@ -68,10 +69,10 @@ interface EditOrderProps {
       productId: string;
       title: string;
       size: string;
-      price: string;
+      price: number;
       quantity: number;
       thumbnail: string | null;
-      subTotal: string | null;
+      subTotal: number | null;
       user: {
         name: string;
         phoneNumber: string | null;
@@ -102,7 +103,7 @@ export const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
     resolver: zodResolver(orderStatusSchema),
     defaultValues: {
       status: initialData?.status || "PENDING",
-      totalPrice: initialData?.totalPrice || "0",
+      totalPrice: initialData?.totalPrice || 0,
       customRequirements: initialData?.customRequirements || "",
     },
   });
@@ -119,7 +120,7 @@ export const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
           price: item.price,
           quantity: item.quantity,
           thumbnail: item.thumbnail || "",
-          subTotal: item.subTotal || "",
+          subTotal: item.subTotal || 0,
           user: {
             name: item.user?.name || "",
             phoneNumber: item.user?.phoneNumber ?? undefined,
@@ -146,13 +147,14 @@ export const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
       };
       await updateCustomerInformation(payload);
       toast.dismiss();
+      // window.location.reload();
       showSuccess({ message: "Customer information updated successfully" });
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       toast.dismiss();
-      showWarning({ message: "Failed to update customer information" });
+      // window.location.reload();
+      showWarning({ message: error?.message || "Failed to update customer information" });
       console.error("Customer update error:", error);
-    } finally {
-      window.location.reload();
     }
   };
 
@@ -171,15 +173,17 @@ export const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
       };
       await updateOrderStatus(payload);
       toast.dismiss();
+      // window.location.reload();
       showSuccess({ message: "Order status updated successfully" });
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       toast.dismiss();
-      showWarning({ message: "Failed to update order status" });
+      // window.location.reload();
+      showWarning({ message: error?.message || "Failed to update order status" });
       console.error("Order status update error:", error);
-    } finally {
-      window.location.reload();
     }
   };
+  
   const onUpdateCartItems: SubmitHandler<{
     cartItems: CartItemFormValues[];
   }> = async (values) => {
@@ -192,8 +196,7 @@ export const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
         if (!original) return false;
         // Check if price or quantity has changed
         return (
-          parseFloat(item.price) !== parseFloat(original.price) ||
-          item.quantity !== original.quantity
+          item.price !== original.price || item.quantity !== original.quantity
         );
       });
 
@@ -207,26 +210,33 @@ export const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
       const payload = {
         orderId: initialData?.id,
         totalPrice: calculateTotal(values.cartItems),
-        changedItems,
+        changedItems: changedItems.map((item) => {
+          const original = initialData?.cartItems.find((i) => i.id === item.id);
+          const changedQuantity = item.quantity - (original?.quantity || 0);
+          return {
+            ...item,
+            changedQuantity,
+          };
+        }),
       };
 
       await updateCartItems(payload);
       toast.dismiss();
-
+      // window.location.reload();
       showSuccess({ message: "Cart items updated successfully" });
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       toast.dismiss();
-      showWarning({ message: "Failed to update cart items" });
+      // window.location.reload();
+      showWarning({ message: error?.message || "Failed to update cart items" });
       console.error("Cart update error:", error);
-    } finally {
-      window.location.reload();
     }
   };
 
   const calculateTotal = (items: CartItemFormValues[]) => {
     return items
       .reduce((total, item) => {
-        const price = parseFloat(item.price) || 0;
+        const price = item.price || 0;
         return total + price * item.quantity;
       }, 0)
       .toFixed(2);
@@ -679,9 +689,7 @@ export const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
                                         );
                                         cartForm.setValue(
                                           `cartItems.${index}.subTotal`,
-                                          (
-                                            qty * parseFloat(newPrice || "0")
-                                          ).toFixed(2),
+                                          qty * parseFloat(newPrice || "0"),
                                         );
                                       }}
                                       disabled={isLoading}
@@ -712,15 +720,12 @@ export const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
                                         const qty =
                                           parseInt(e.target.value) || 0;
                                         field.onChange(qty);
-                                        const price =
-                                          parseFloat(
-                                            cartForm.getValues(
-                                              `cartItems.${index}.price`,
-                                            ),
-                                          ) || 0;
+                                        const price = cartForm.getValues(
+                                          `cartItems.${index}.price`,
+                                        );
                                         cartForm.setValue(
                                           `cartItems.${index}.subTotal`,
-                                          (qty * price).toFixed(2),
+                                          qty * price,
                                         );
                                       }}
                                       disabled={isLoading}
