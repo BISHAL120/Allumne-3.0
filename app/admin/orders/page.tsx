@@ -2,21 +2,25 @@ import Orders from "@/components/admin/orders/orders";
 import { getOrders } from "@/lib/data-layer/admin/admin";
 import { OrderStatus } from "@prisma/client";
 
-
 export interface OrdersProps {
-    status: OrderStatus;
-    id: string;
+  status: OrderStatus;
+  id: string;
+  fullName: string;
+  phone: string;
+  email: string | null;
+  createdAt: Date;
+  customer: {
     fullName: string;
     phone: string;
     email: string | null;
-    createdAt: Date;
-    cartItems: {
-        product: {
-            productName: string;
-        };
-        subTotal: string;
-        quantity: number;
-    }[];
+  };
+  cartItems: {
+    product: {
+      productName: string;
+    };
+    subTotal: string;
+    quantity: number;
+  }[];
 }
 
 const Page = async ({
@@ -31,13 +35,16 @@ const Page = async ({
   const search = params?.search || "";
   const status = params?.status || "all";
 
-const { orders, pagination } = await getOrders({ search, status, page: Number(page), perPage: Number(perPage) });
-
+  const { orders, pagination } = await getOrders({
+    search,
+    status,
+    page: Number(page),
+    perPage: Number(perPage),
+  });
 
   return (
     <div>
-      {/* <Orders orders={orders as OrdersProps[]} pagination={pagination} /> */}
-      Orders Page
+      <Orders orders={orders as OrdersProps[]} pagination={pagination} />
     </div>
   );
 };

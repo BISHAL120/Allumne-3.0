@@ -37,7 +37,7 @@ import {
 const data = {
   teams: [
     {
-      name: "Smart Inventory Art",
+      name: "Smart Inventory",
       logo: Command,
       plan: "Startup",
       url: "/admin",
@@ -66,10 +66,6 @@ const data = {
         {
           title: "New Orders",
           url: "/admin/orders/new",
-        },
-        {
-          title: "Processing Orders",
-          url: "/admin/orders/processing",
         },
         {
           title: "All Orders",

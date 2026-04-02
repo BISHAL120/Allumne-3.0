@@ -29,8 +29,7 @@ const Page = async ({
   });
   return (
     <div>
-      New Order Page
-      {/* <NewOrder orders={orders as OrdersProps[]} pagination={pagination} /> */}
+      <NewOrder orders={orders as OrdersProps[]} pagination={pagination} />
     </div>
   );
 };

@@ -2,8 +2,8 @@ export const runtime = "nodejs";
 
 
 import db from "@/lib/prisma";
-import { isAdmin } from "../check-Access";
 import { OrderStatus, ProductStatus, Role } from "@prisma/client";
+import { isAdmin } from "../check-Access";
 
 // Get All Category
 export const getAllCategory = async () => {
@@ -292,30 +292,34 @@ export const getCategoryDetailsById = async (categoryId: string) => {
 export const getOrders = async ({ search, status, page, perPage: per_page }: { search: string, status: string, page: number, perPage: number }) => {
     await isAdmin();
 
+    console.log("Order Search", search)
+
     const skip = (page - 1) * per_page;
     const totalItems = await db.order.count({
         where: {
             status: status === "all" ? undefined : status as OrderStatus,
-            // OR: [
-            //     {
-            //         fullName: {
-            //             contains: search,
-            //             mode: "insensitive"
-            //         }
-            //     },
-            //     {
-            //         phone: {
-            //             contains: search,
-            //             mode: "insensitive"
-            //         }
-            //     },
-            //     {
-            //         email: {
-            //             contains: search,
-            //             mode: "insensitive"
-            //         }
-            //     }
-            // ]
+            customer: {
+                OR: [
+                    {
+                        fullName: {
+                            contains: search,
+                            mode: "insensitive"
+                        }
+                    },
+                    {
+                        phone: {
+                            contains: search,
+                            mode: "insensitive"
+                        }
+                    },
+                    {
+                        email: {
+                            contains: search,
+                            mode: "insensitive"
+                        }
+                    }
+                ]
+            }
         }
     });
     const totalPage = Math.ceil(totalItems / per_page);
@@ -324,31 +328,38 @@ export const getOrders = async ({ search, status, page, perPage: per_page }: { s
     const orders = await db.order.findMany({
         where: {
             status: status === "all" ? undefined : status as OrderStatus,
-            // OR: [
-            //     {
-            //         fullName: {
-
-            //             contains: search
-
-            //         }
-            //     },
-            //     {
-            //         phone: {
-            //             contains: search,
-            //             mode: "insensitive"
-            //         }
-            //     },
-            //     {
-            //         email: {
-            //             contains: search,
-            //             mode: "insensitive"
-            //         }
-            //     }
-            // ]
+            customer: {
+                OR: [
+                    {
+                        fullName: {
+                            contains: search,
+                            mode: "insensitive"
+                        }
+                    },
+                    {
+                        phone: {
+                            contains: search,
+                            mode: "insensitive"
+                        }
+                    },
+                    {
+                        email: {
+                            contains: search,
+                            mode: "insensitive"
+                        }
+                    }
+                ]
+            }
         },
         select: {
             id: true,
-           
+            customer: {
+                select: {
+                    fullName: true,
+                    phone: true,
+                    email: true,
+                }
+            },
             status: true,
             createdAt: true,
             cartItems: {
@@ -394,11 +405,10 @@ export const getOrderDetails = async ({ order_id }: { order_id: string }) => {
         select: {
             id: true,
             orderNumber: true,
-           
             totalPrice: true,
             status: true,
-          
             createdAt: true,
+            customer: true,
             cartItems: {
                 select: {
                     id: true,
@@ -511,10 +521,11 @@ export const getOrderDetailsById = async (orderId: string) => {
         },
         select: {
             id: true,
-           
             orderNumber: true,
             status: true,
-           
+            totalPrice: true,
+            customRequirements: true,
+            customer: true,
             cartItems: {
                 select: {
                     id: true,
@@ -523,7 +534,13 @@ export const getOrderDetailsById = async (orderId: string) => {
                     size: true,
                     price: true,
                     quantity: true,
-                    user: true,
+                    user: {
+                        select: {
+                            name: true,
+                            phoneNumber: true,
+                            email: true,
+                        }
+                    },
                     thumbnail: true,
                     subTotal: true,
                     orderId: true,

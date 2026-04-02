@@ -12,6 +12,7 @@ type ProductInput = {
   thumbnail?: string;
   artist?: string;
   size?: string;
+  stock?: number;
   options?: Record<string, string | number>;
 };
 
@@ -22,6 +23,7 @@ type CartItem = {
   thumbnail?: string;
   artist?: string;
   size?: string;
+  stock?: number;
   options?: Record<string, string | number>;
   quantity: number;
 };
@@ -98,6 +100,7 @@ export const useCart = create<CartState>()(
             thumbnail: product.thumbnail,
             artist: product.artist,
             size,
+            stock: product.stock,
             options: product.options,
             quantity,
           });

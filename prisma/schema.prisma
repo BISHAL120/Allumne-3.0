@@ -17,23 +17,25 @@ enum Role {
 }
 
 model User {
-  id            String    @id @map("_id")
+  id            String     @id @map("_id")
   name          String
   lastName      String?
   phoneNumber   String?
   email         String
-  emailVerified Boolean   @default(false)
-  isActive      Boolean   @default(false)
+  emailVerified Boolean    @default(false)
+  isActive      Boolean    @default(false)
   image         String?
   bio           String?
   location      String?
-  isDeleted     Boolean   @default(false)
-  role          Role[]    @default([USER])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  isDeleted     Boolean    @default(false)
+  role          Role[]     @default([USER])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   sessions      Session[]
   accounts      Account[]
   products      Product[]
+  cartItems     CartItem[]
+  orders        Order[]
 
   @@unique([email])
   @@map("user")
@@ -172,14 +174,16 @@ model Product {
 }
 
 model CartItem {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
   title     String
   thumbnail String
   size      String
   price     String
   subTotal  String
   quantity  Int
-  user      String
+  userId    String
+  user      User   @relation(fields: [userId], references: [id])
+
   orderId   String   @db.ObjectId
   order     Order    @relation(fields: [orderId], references: [id])
   productId String   @db.ObjectId
@@ -197,27 +201,28 @@ enum OrderStatus {
 }
 
 model Order {
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
-  totalPrice  String
-  orderNumber String
-
-  customerId String
-  customer   Customer    @relation(fields: [customerId], references: [id])
-  status     OrderStatus @default(PENDING)
-  cartItems  CartItem[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id                 String      @id @default(auto()) @map("_id") @db.ObjectId
+  totalPrice         String
+  orderNumber        String
+  customRequirements String?
+  customerId         String      @db.ObjectId
+  customer           Customer    @relation(fields: [customerId], references: [id])
+  userId             String
+  user               User        @relation(fields: [userId], references: [id])
+  status             OrderStatus @default(PENDING)
+  cartItems          CartItem[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
 }
 
 model Customer {
-  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
-  fullName           String
-  phone              String
-  fullAddress        String
-  email              String?
-  paymentScreenshot  String?
-  customRequirements String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  orders             Order[]
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  fullName          String
+  phone             String
+  fullAddress       String
+  email             String?
+  paymentScreenshot String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  orders            Order[]
 }

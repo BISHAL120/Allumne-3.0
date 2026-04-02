@@ -1,17 +1,21 @@
-import EditOrder from '@/components/admin/orders/edit/edit-order';
-import { getOrderDetailsById } from '@/lib/data-layer/admin/admin';
+import EditOrder from "@/components/admin/orders/edit/edit-order";
+import OrderNotFound from "@/components/admin/orders/order-not-found";
+import { getOrderDetailsById } from "@/lib/data-layer/admin/admin";
 
 const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
-    const { id } = await params;
+  const { id } = await params;
 
-    const order = await getOrderDetailsById(id);
+  const order = await getOrderDetailsById(id);
+
+  if (!order) {
+   return <OrderNotFound />
+  }
 
   return (
     <div>
-      Edit Order Page
-        {/* <EditOrder initialData={order} /> */}
+      <EditOrder initialData={order} />
     </div>
-  )
-}
+  );
+};
 
-export default Page
+export default Page;

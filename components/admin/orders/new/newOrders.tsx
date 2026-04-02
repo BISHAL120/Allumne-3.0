@@ -93,10 +93,10 @@ export default function NewOrdersPage({
                     <td className="px-6 py-4">
                       <div>
                         <p className="text-sm font-medium text-foreground">
-                          {order.fullName}
+                          {order.customer.fullName}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {order.phone}
+                          {order.customer.phone}
                         </p>
                       </div>
                     </td>

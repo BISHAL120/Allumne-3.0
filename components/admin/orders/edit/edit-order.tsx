@@ -1,15 +1,6 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
-import { ArrowLeft, Check, Loader2, Plus, Save, Trash2 } from "lucide-react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import React, { useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
-import * as z from "zod";
-
-import { Button } from "@/components/ui/button";
+import { showLoading, showSuccess, showWarning } from "@/lib/toast";
 import {
   Card,
   CardContent,
@@ -35,83 +26,90 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { showError, showSuccess } from "@/lib/toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import React from "react";
+import { useFieldArray, useForm, type SubmitHandler } from "react-hook-form";
 
-const cartItemSchema = z.object({
-  id: z.string().optional(),
-  price: z.string().min(1, "Price is required"),
-  productId: z.string().optional(),
-  title: z.string().min(1, "Title is required"),
-  size: z.string().min(1, "Size is required"),
-  quantity: z.number().min(1, "Quantity must be at least 1"),
-  artist: z.string().optional(),
-  thumbnail: z.string().optional(),
-  subTotal: z.string().optional(),
-});
-
-const orderFormSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
-  phone: z.string().min(1, "Phone number is required"),
-  fullAddress: z.string().min(1, "Address is required"),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
-  orderNumber: z.string().min(1, "Order number is required"),
-  status: z.enum([
-    "PENDING",
-    "CONFIRMED",
-    "SHIPPED",
-    "DELIVERED",
-    "CANCELLED",
-  ]),
-  customRequirements: z.string().optional().or(z.literal("")),
-  cartItems: z.array(cartItemSchema),
-});
-
-type OrderFormValues = z.infer<typeof orderFormSchema>;
+import { Button } from "@/components/ui/button";
+import {
+  customerSchema,
+  orderStatusSchema,
+  type CartItemFormValues,
+  type CustomerFormValues,
+  type OrderStatusFormValues,
+} from "./schema";
+import {
+  updateCartItems,
+  updateCustomerInformation,
+  updateOrderStatus,
+} from "@/lib/actions/order-actions";
+import { toast } from "sonner";
 
 interface EditOrderProps {
   initialData: {
     id: string;
-    fullName: string;
-    phone: string;
-    fullAddress: string;
-    email?: string | null;
     orderNumber: string;
-    status:
-      | "PENDING"
-      | "CONFIRMED"
-      | "SHIPPED"
-      | "DELIVERED"
-      | "CANCELLED";
+    status: "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+    totalPrice: string;
     customRequirements?: string | null;
-    cartItems: {
+    customer: {
       id: string;
-      productId?: string;
+      fullName: string;
+      email: string | null;
+      phone: string;
+      fullAddress: string;
+      paymentScreenshot?: string | null;
+    };
+    cartItems: Array<{
+      id: string;
+      productId: string;
       title: string;
       size: string;
       price: string;
       quantity: number;
-      artist?: string;
-      thumbnail?: string;
-      subTotal?: string;
-      orderId: string;
-    }[];
-  } | null;
+      thumbnail: string | null;
+      subTotal: string | null;
+      user: {
+        name: string;
+        phoneNumber: string | null;
+        email: string;
+      };
+    }>;
+  };
 }
 
-const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
+export const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoading = false; // Always false since we're just logging
 
-  const form = useForm<OrderFormValues>({
-    resolver: zodResolver(orderFormSchema),
+  // 1. Customer Information Form
+  const customerForm = useForm<CustomerFormValues>({
+    resolver: zodResolver(customerSchema),
     defaultValues: {
-      fullName: initialData?.fullName || "",
-      phone: initialData?.phone || "",
-      fullAddress: initialData?.fullAddress || "",
-      email: initialData?.email || "",
-      orderNumber: initialData?.orderNumber || "",
+      fullName: initialData?.customer?.fullName || "",
+      phone: initialData?.customer?.phone || "",
+      fullAddress: initialData?.customer?.fullAddress || "",
+      email: initialData?.customer?.email || "",
+      paymentScreenshot: initialData?.customer?.paymentScreenshot || null,
+    },
+  });
+
+  // 2. Order Status Form
+  const orderStatusForm = useForm<OrderStatusFormValues>({
+    resolver: zodResolver(orderStatusSchema),
+    defaultValues: {
       status: initialData?.status || "PENDING",
+      totalPrice: initialData?.totalPrice || "0",
       customRequirements: initialData?.customRequirements || "",
+    },
+  });
+
+  // 3. Cart Items Form (Using useFieldArray for dynamic management)
+  const cartForm = useForm<{ cartItems: CartItemFormValues[] }>({
+    defaultValues: {
       cartItems:
         initialData?.cartItems?.map((item) => ({
           id: item.id,
@@ -120,47 +118,112 @@ const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
           size: item.size,
           price: item.price,
           quantity: item.quantity,
-          artist: item.artist,
-          thumbnail: item.thumbnail,
-          subTotal: item.subTotal,
+          thumbnail: item.thumbnail || "",
+          subTotal: item.subTotal || "",
+          user: {
+            name: item.user?.name || "",
+            phoneNumber: item.user?.phoneNumber ?? undefined,
+            email: item.user?.email || "",
+          },
         })) || [],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: cartFields } = useFieldArray({
     name: "cartItems",
-    control: form.control,
+    control: cartForm.control,
   });
 
-  const onSubmit = async (values: OrderFormValues) => {
+  // Update Handlers
+  const onUpdateCustomer: SubmitHandler<CustomerFormValues> = async (
+    values,
+  ) => {
+    showLoading("Updating customer information...");
     try {
-      setIsLoading(true);
-      // Calculate subtotal for each item before sending
-      const updatedValues = {
-        fullName: values.fullName,
-        email: values.email,
-        phone: values.phone,
-        fullAddress: values.fullAddress,
-        status: values.status,
-        customRequirements: values.customRequirements,
-        
+      const payload = {
+        customerId: initialData?.customer.id || "",
+        customer: values,
       };
-      await axios.patch(`/api/admin/orders/?orderId=${initialData?.id}`, updatedValues);
-      showSuccess({ message: "Order updated successfully" });
-      router.refresh();
-      router.push("/admin/orders");
-    } catch (error: unknown) {
-      const errorMessage = axios.isAxiosError(error)
-        ? error.response?.data?.message
-        : "Failed to update order";
-      showError({ message: errorMessage });
+      await updateCustomerInformation(payload);
+      toast.dismiss();
+      showSuccess({ message: "Customer information updated successfully" });
+    } catch (error) {
+      toast.dismiss();
+      showWarning({ message: "Failed to update customer information" });
+      console.error("Customer update error:", error);
     } finally {
-      setIsLoading(false);
+      window.location.reload();
     }
   };
 
-  const calculateTotal = () => {
-    const items = form.watch("cartItems");
+  const onUpdateOrderStatus: SubmitHandler<OrderStatusFormValues> = async (
+    values,
+  ) => {
+    showLoading("Updating order status...");
+    try {
+      const payload = {
+        orderId: initialData?.id || "",
+        status: {
+          status: values.status,
+          customRequirements: values.customRequirements,
+          totalPrice: values.totalPrice,
+        },
+      };
+      await updateOrderStatus(payload);
+      toast.dismiss();
+      showSuccess({ message: "Order status updated successfully" });
+    } catch (error) {
+      toast.dismiss();
+      showWarning({ message: "Failed to update order status" });
+      console.error("Order status update error:", error);
+    } finally {
+      window.location.reload();
+    }
+  };
+  const onUpdateCartItems: SubmitHandler<{
+    cartItems: CartItemFormValues[];
+  }> = async (values) => {
+    showLoading("Updating cart items...");
+
+    try {
+      // Compare with initialData to find only changed items
+      const changedItems = values.cartItems.filter((item) => {
+        const original = initialData?.cartItems.find((i) => i.id === item.id);
+        if (!original) return false;
+        // Check if price or quantity has changed
+        return (
+          parseFloat(item.price) !== parseFloat(original.price) ||
+          item.quantity !== original.quantity
+        );
+      });
+
+      // If no items changed, skip the update
+      if (changedItems.length === 0) {
+        toast.dismiss();
+        showSuccess({ message: "No changes detected" });
+        return;
+      }
+
+      const payload = {
+        orderId: initialData?.id,
+        totalPrice: calculateTotal(values.cartItems),
+        changedItems,
+      };
+
+      await updateCartItems(payload);
+      toast.dismiss();
+
+      showSuccess({ message: "Cart items updated successfully" });
+    } catch (error) {
+      toast.dismiss();
+      showWarning({ message: "Failed to update cart items" });
+      console.error("Cart update error:", error);
+    } finally {
+      window.location.reload();
+    }
+  };
+
+  const calculateTotal = (items: CartItemFormValues[]) => {
     return items
       .reduce((total, item) => {
         const price = parseFloat(item.price) || 0;
@@ -195,64 +258,56 @@ const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button onClick={form.handleSubmit(onSubmit)} disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
-              </>
-            )}
-          </Button>
-        </div>
       </div>
 
       <Separator />
 
-      <Form {...form}>
-        <form className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Customer Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Customer Information</CardTitle>
-                <CardDescription>
-                  Customer contact and delivery details
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="John Doe"
-                          {...field}
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column: Customer and Order Management */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Customer Information Form */}
+          <Form {...customerForm}>
+            <form
+              onSubmit={customerForm.handleSubmit(onUpdateCustomer)}
+              className="space-y-4"
+            >
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle>Customer Information</CardTitle>
+                    <CardDescription>
+                      Contact and delivery details
+                    </CardDescription>
+                  </div>
+                  <Button type="submit" size="sm" disabled={isLoading}>
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span className="ml-2 hidden sm:inline">Update</span>
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <FormField
-                    control={form.control}
+                    control={customerForm.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="John Doe"
+                            {...field}
+                            disabled={isLoading}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={customerForm.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
@@ -269,7 +324,7 @@ const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
                     )}
                   />
                   <FormField
-                    control={form.control}
+                    control={customerForm.control}
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
@@ -285,92 +340,35 @@ const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
                       </FormItem>
                     )}
                   />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="fullAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Delivery Address</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Street, City, State, ZIP"
-                          {...field}
-                          disabled={isLoading}
-                          className="min-h-25"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Order Status & Meta */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Order Management</CardTitle>
-                  <CardDescription>
-                    Control order status and tracking
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
                   <FormField
-                    control={form.control}
-                    name="orderNumber"
+                    control={customerForm.control}
+                    name="fullAddress"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Order Number</FormLabel>
+                        <FormLabel>Delivery Address</FormLabel>
                         <FormControl>
-                          <Input disabled {...field} />
+                          <Textarea
+                            placeholder="Street, City, State, ZIP"
+                            {...field}
+                            disabled={isLoading}
+                            className="min-h-20"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
-                    control={form.control}
-                    name="status"
+                    control={customerForm.control}
+                    name="paymentScreenshot"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Order Status</FormLabel>
-                        <Select
-                          disabled={isLoading}
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="PENDING">Pending</SelectItem>
-                            <SelectItem value="PROCESSING">
-                              Processing
-                            </SelectItem>
-                            <SelectItem value="DELIVERED">Delivered</SelectItem>
-                            <SelectItem value="RETURNED">Returned</SelectItem>
-                            <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                            <SelectItem value="REJECTED">Rejected</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="customRequirements"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Custom Requirements / Notes</FormLabel>
+                        <FormLabel>Payment Screenshot URL</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Any special instructions..."
-                            {...field}
+                          <Input
+                            placeholder="https://example.com/screenshot.jpg"
+                            value={field.value || ""}
+                            onChange={field.onChange}
                             disabled={isLoading}
                           />
                         </FormControl>
@@ -380,244 +378,402 @@ const EditOrder: React.FC<EditOrderProps> = ({ initialData }) => {
                   />
                 </CardContent>
               </Card>
-
-              {/* Order Total Summary */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Order Summary</CardTitle>
+                <CardHeader className="">
+                  <CardTitle className="text-sm">
+                    Staff Member Information
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Subtotal
-                      </span>
-                      <span className="font-medium">${calculateTotal()}</span>
-                    </div>
-                    <div className="flex items-center justify-between border-t pt-2">
-                      <span className="text-base font-bold">Total</span>
-                      <span className="text-base font-bold">
-                        ${calculateTotal()}
-                      </span>
-                    </div>
+                <CardContent className="space-y-1">
+                  <div className="space-y-1 flex items-center gap-3">
+                    <p className="text-xs text-muted-foreground">Name :</p>
+                    <p className="text-sm font-medium">
+                      {initialData?.cartItems?.[0]?.user?.name || "—"}
+                    </p>
+                  </div>
+                  <div className="space-y-1 flex items-center gap-3">
+                    <p className="text-xs text-muted-foreground">Phone :</p>
+                    <p className="text-sm font-medium">
+                      {initialData?.cartItems?.[0]?.user?.phoneNumber || "—"}
+                    </p>
+                  </div>
+                  <div className="space-y-1 flex items-center gap-3">
+                    <p className="text-xs text-muted-foreground">Email :</p>
+                    <p className="text-sm font-medium">
+                      {initialData?.cartItems?.[0]?.user?.email || "—"}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          </div>
-
-          {/* Cart Items */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <div>
-                <CardTitle>Order Items</CardTitle>
-                <CardDescription>
-                  Manage products included in this order
-                </CardDescription>
-              </div>
-              {/* <div className="space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    append({ title: "", size: "", price: "0", quantity: 1 })
-                  }
-                  disabled={isLoading}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Item
-                </Button>
-                {initialData?.cartItems !== form.watch("cartItems") && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAddToCartChange()}
-                    disabled={isLoading}
-                  >
-                    <Check className="mr-2 h-4 w-4" />
-                    Save Changes
-                  </Button>
-                )}
-              </div> */}
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="group relative">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start p-4 rounded-lg border bg-muted/20 transition-colors hover:bg-muted/30">
-                      {/* Thumbnail Display */}
-                      <div className="md:col-span-1 flex items-center justify-center">
-                        <div className="relative h-16 w-16 rounded-md overflow-hidden bg-muted border">
-                          {form.watch(`cartItems.${index}.thumbnail`) ? (
-                            <Image
-                              src={form.watch(`cartItems.${index}.thumbnail`)!}
-                              alt="Product"
-                              fill
-                              className="object-cover"
+            </form>
+          </Form>
+        </div>
+        <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-6">
+            {/* Order Status & Info Form */}
+            <Form {...orderStatusForm}>
+              <form
+                onSubmit={orderStatusForm.handleSubmit(onUpdateOrderStatus)}
+                className="space-y-4"
+              >
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                    <div>
+                      <CardTitle>Order Status</CardTitle>
+                      <CardDescription>Status and pricing</CardDescription>
+                    </div>
+                    <Button type="submit" size="sm" disabled={isLoading}>
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      <span className="ml-2 hidden sm:inline">Update</span>
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormItem>
+                      <FormLabel>Order Number</FormLabel>
+                      <FormControl>
+                        <Input value={initialData?.orderNumber} disabled />
+                      </FormControl>
+                    </FormItem>
+                    <FormField
+                      control={orderStatusForm.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select
+                            disabled={isLoading}
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="PENDING">Pending</SelectItem>
+                              <SelectItem value="CONFIRMED">
+                                Confirmed
+                              </SelectItem>
+                              <SelectItem value="SHIPPED">Shipped</SelectItem>
+                              <SelectItem value="DELIVERED">
+                                Delivered
+                              </SelectItem>
+                              <SelectItem value="CANCELLED">
+                                Cancelled
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={orderStatusForm.control}
+                      name="totalPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Total Price</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="0.00"
+                              disabled={isLoading}
                             />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-                              N/A
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={orderStatusForm.control}
+                      name="customRequirements"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Custom Requirements / Notes</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Any special instructions..."
+                              {...field}
+                              disabled={isLoading}
+                              className="min-h-20"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </form>
+            </Form>
+
+            {/* Order Total Summary (Read-only) */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Calculated Total</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      Subtotal (Items)
+                    </span>
+                    <span className="font-medium">
+                      ${calculateTotal(cartForm.watch("cartItems"))}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between border-t pt-2">
+                    <span className="text-base font-bold">Total</span>
+                    <span className="text-base font-bold">
+                      ${calculateTotal(cartForm.watch("cartItems"))}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Cart Items */}
+        <div className="lg:col-span-2">
+          <Form {...cartForm}>
+            <form
+              onSubmit={cartForm.handleSubmit(onUpdateCartItems)}
+              className="space-y-6"
+            >
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle>Order Items</CardTitle>
+                    <CardDescription>
+                      Products included in this order
+                    </CardDescription>
+                  </div>
+                  <Button type="submit" size="sm" disabled={isLoading}>
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span className="ml-2 hidden sm:inline">Update Cart</span>
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {cartFields.map((field, index) => (
+                      <div key={field.id} className="group relative">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start p-4 rounded-lg border bg-muted/20 transition-colors hover:bg-muted/30">
+                          {/* Thumbnail Display */}
+                          <div className="md:col-span-1 flex items-center justify-center">
+                            <div className="relative h-16 w-16 rounded-md overflow-hidden bg-muted border">
+                              {cartForm.watch(
+                                `cartItems.${index}.thumbnail`,
+                              ) ? (
+                                <Image
+                                  src={
+                                    cartForm.watch(
+                                      `cartItems.${index}.thumbnail`,
+                                    )!
+                                  }
+                                  alt="Product"
+                                  fill
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center text-muted-foreground text-[10px]">
+                                  NO IMG
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
+
+                          <div className="md:col-span-4 space-y-2">
+                            <FormField
+                              control={cartForm.control}
+                              name={`cartItems.${index}.title`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel
+                                    className={index !== 0 ? "sr-only" : ""}
+                                  >
+                                    Product Title
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      placeholder="Product Name"
+                                      disabled
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={cartForm.control}
+                              name={`cartItems.${index}.productId`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      placeholder="Product ID"
+                                      disabled
+                                      className="text-[10px] h-6"
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="md:col-span-1">
+                            <FormField
+                              control={cartForm.control}
+                              name={`cartItems.${index}.size`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel
+                                    className={index !== 0 ? "sr-only" : ""}
+                                  >
+                                    Size
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      placeholder="Size"
+                                      disabled
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <FormField
+                              control={cartForm.control}
+                              name={`cartItems.${index}.price`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel
+                                    className={index !== 0 ? "sr-only" : ""}
+                                  >
+                                    Price
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      placeholder="0.00"
+                                      onChange={(e) => {
+                                        const newPrice = e.target.value;
+                                        field.onChange(newPrice);
+                                        const qty = cartForm.getValues(
+                                          `cartItems.${index}.quantity`,
+                                        );
+                                        cartForm.setValue(
+                                          `cartItems.${index}.subTotal`,
+                                          (
+                                            qty * parseFloat(newPrice || "0")
+                                          ).toFixed(2),
+                                        );
+                                      }}
+                                      disabled={isLoading}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <FormField
+                              control={cartForm.control}
+                              name={`cartItems.${index}.quantity`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel
+                                    className={index !== 0 ? "sr-only" : ""}
+                                  >
+                                    Qty
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      {...field}
+                                      onChange={(e) => {
+                                        const qty =
+                                          parseInt(e.target.value) || 0;
+                                        field.onChange(qty);
+                                        const price =
+                                          parseFloat(
+                                            cartForm.getValues(
+                                              `cartItems.${index}.price`,
+                                            ),
+                                          ) || 0;
+                                        cartForm.setValue(
+                                          `cartItems.${index}.subTotal`,
+                                          (qty * price).toFixed(2),
+                                        );
+                                      }}
+                                      disabled={isLoading}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <FormField
+                              control={cartForm.control}
+                              name={`cartItems.${index}.subTotal`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel
+                                    className={index !== 0 ? "sr-only" : ""}
+                                  >
+                                    Subtotal
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      placeholder="0.00"
+                                      disabled
+                                      className="bg-muted/50"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
                       </div>
+                    ))}
 
-                      <div className="md:col-span-4 space-y-2">
-                        <FormField
-                          control={form.control}
-                          name={`cartItems.${index}.title`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel
-                                className={index !== 0 ? "sr-only" : ""}
-                              >
-                                Product Title
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="Product Name"
-                                  disabled
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`cartItems.${index}.artist`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="Artist Name"
-                                  disabled
-                                  className="text-xs h-7"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                    {cartFields.length === 0 && (
+                      <div className="text-center py-10 border-2 border-dashed rounded-lg bg-muted/10">
+                        <p className="text-sm text-muted-foreground">
+                          No items in this order.
+                        </p>
                       </div>
-                      <div className="md:col-span-2">
-                        <FormField
-                          control={form.control}
-                          name={`cartItems.${index}.size`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel
-                                className={index !== 0 ? "sr-only" : ""}
-                              >
-                                Size
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="Size"
-                                  disabled
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <FormField
-                          control={form.control}
-                          name={`cartItems.${index}.price`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel
-                                className={index !== 0 ? "sr-only" : ""}
-                              >
-                                Price
-                              </FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <Input
-                                    {...field}
-                                    className="pl-6"
-                                    placeholder="0.00"
-                                    disabled
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <FormField
-                          control={form.control}
-                          name={`cartItems.${index}.quantity`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel
-                                className={index !== 0 ? "sr-only" : ""}
-                              >
-                                Qty
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(parseInt(e.target.value))
-                                  }
-                                  disabled
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      {/* <div className="md:col-span-1 flex justify-end">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => remove(index)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          disabled={isLoading || fields.length === 1}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div> */}
-                    </div>
+                    )}
                   </div>
-                ))}
-
-                {fields.length === 0 && (
-                  <div className="text-center py-10 border-2 border-dashed rounded-lg bg-muted/10">
-                    <p className="text-sm text-muted-foreground">
-                      No items in this order.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="link"
-                      onClick={() =>
-                        append({ title: "", size: "", price: "0", quantity: 1 })
-                      }
-                      className="mt-2"
-                    >
-                      Add your first item
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </form>
-      </Form>
+                </CardContent>
+              </Card>
+            </form>
+          </Form>
+        </div>
+      </div>
     </div>
   );
 };
