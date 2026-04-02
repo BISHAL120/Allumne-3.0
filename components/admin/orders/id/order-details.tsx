@@ -6,19 +6,10 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { format } from "date-fns";
 import {
   ArrowLeft,
@@ -27,266 +18,238 @@ import {
   Mail,
   MapPin,
   Package,
-  Paintbrush,
   Phone,
   User as UserIcon,
+  Receipt,
+  CreditCard,
+  Image as ImageIcon,
+  BadgeCheck
 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface OrderDetailsProps {
-  order: SingleOrderProps;
+  order: Omit<SingleOrderProps, "cartItems"> & {
+    customRequirements?: string | null;
+    customer?: {
+      fullName: string;
+      email: string | null;
+      phone: string;
+      fullAddress: string;
+      paymentScreenshot?: string | null;
+    };
+    cartItems: Array<
+      Omit<SingleOrderProps["cartItems"][number], "user"> & {
+        user: string | { name: string; email: string; [key: string]: unknown } | null;
+      }
+    >;
+  };
 }
 
 const OrderDetails = ({ order }: OrderDetailsProps) => {
-  const getStatusColor = (status: SingleOrderProps["status"]) => {
+  const router = useRouter();
+
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "DELIVERED":
-        return "bg-green-100 text-green-800 hover:bg-green-100";
+        return "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20";
       case "CONFIRMED":
-        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+        return "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20";
+      case "SHIPPED":
+        return "bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20";
       case "PENDING":
-        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+        return "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20";
       case "CANCELLED":
-        return "bg-red-100 text-red-800 hover:bg-red-100";
+        return "bg-rose-500/10 text-rose-600 hover:bg-rose-500/20";
       default:
-        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+        return "bg-slate-500/10 text-slate-600 hover:bg-slate-500/20";
     }
   };
 
   return (
-    <div className="space-y-8 p-6 lg:p-10 max-w-7xl mx-auto">
+    <div className="space-y-6 p-4 md:p-8 max-w-[1200px] mx-auto">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Back Button - Left Side */}
-        <Button
-          onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-sm font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </Button>
-
-        {/* Order Info - Right Side */}
-        <div className="text-right">
-          <div className="flex items-center gap-3 mb-1 justify-end">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Order #{order.orderNumber}
-            </h1>
-            <Badge
-              className={`${getStatusColor(order.status)} border-none px-3 py-1 font-medium`}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/40">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              onClick={() => router.back()}
             >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Order {order.orderNumber}
+            </h1>
+            <Badge className={`${getStatusColor(order.status)} border-none shadow-none`}>
               {order.status}
             </Badge>
           </div>
-          <div className="flex items-center gap-4 text-muted-foreground justify-end">
-            <div className="flex items-center gap-1">
-              <CalendarDays className="w-4 h-4" />
-              <span>{format(new Date(order.createdAt), "PPP")}</span>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground ml-11">
+            <div className="flex items-center gap-1.5">
+              <CalendarDays className="w-3.5 h-3.5" />
+              <span>{format(new Date(order.createdAt), "MMM dd, yyyy")}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <span>{format(new Date(order.createdAt), "p")}</span>
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" />
+              <span>{format(new Date(order.createdAt), "hh:mm a")}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content - Left Side */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="shadow-sm overflow-hidden p-0 gap-0">
-            <CardHeader className="border-b p-4">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <Paintbrush className="w-5 h-5 text-muted-foreground" />
-                Artworks & Paintings
+          {/* Order Items */}
+          <Card className="shadow-none border-border/50 overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-border/50 py-4">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Package className="w-4 h-4 text-muted-foreground" />
+                Order Items
+                <Badge variant="secondary" className="ml-auto rounded-full font-medium">
+                  {order.cartItems.length} {order.cartItems.length === 1 ? "Item" : "Items"}
+                </Badge>
               </CardTitle>
-              <CardDescription>
-                {order.cartItems.length}{" "}
-                {order.cartItems.length === 1 ? "item" : "items"} in this order
-              </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent ">
-                    <TableHead className="w-100 pl-6 py-4">Product</TableHead>
-                    <TableHead className="text-center py-4">Quantity</TableHead>
-                    <TableHead className="text-right py-4 pr-6">
-                      Subtotal
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {order.cartItems.map((item) => (
-                    <TableRow key={item.id} className=" hover:bg-muted/5">
-                      <TableCell className="pl-6 py-4">
-                        <div className="flex gap-4">
-                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0 border ">
-                            <Image
-                              width={200}
-                              height={200}
-                              src={item.thumbnail}
-                              alt={item.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex flex-col justify-center space-y-1">
-                            <span className="font-semibold text-base">
-                              {item.title}
-                            </span>
-                            <div className="flex flex-col text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <UserIcon className="w-3 h-3" />
-                                {item.user}
-                              </span>
-                              <span>Size: {item.size}</span>
-                              <span>
-                                Price: ৳{Number(item.price).toLocaleString()}
-                              </span>
-                            </div>
-                          </div>
+              <div className="divide-y divide-border/50">
+                {order.cartItems.map((item) => (
+                  <div key={item.id} className="flex flex-col sm:flex-row gap-4 p-4 sm:p-6 hover:bg-muted/10 transition-colors">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50 relative">
+                      <Image
+                        fill
+                        src={item.thumbnail || "/placeholder.svg"}
+                        alt={item.title}
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="space-y-1">
+                          <h3 className="font-semibold text-base leading-none">{item.title}</h3>
+                          <p className="text-sm text-muted-foreground">Size: {item.size}</p>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-center py-4 font-medium">
-                        {item.quantity}
-                      </TableCell>
-                      <TableCell className="text-right py-4 pr-6 font-semibold">
-                        ৳{Number(item.subTotal).toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        <div className="text-right">
+                          <p className="font-semibold text-base">৳{Number(item.subTotal).toLocaleString()}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {item.quantity} × ৳{Number(item.price).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/40 px-2.5 py-1 rounded-md w-fit">
+                          <BadgeCheck className="w-3.5 h-3.5" />
+                          Added by: {typeof item.user === 'object' && item.user !== null ? (item.user as { name?: string }).name : typeof item.user === "string" ? item.user : "Staff"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
+          {/* Custom Requirements */}
           {order.customRequirements && (
-            <Card className="border-none shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold flex items-center gap-2 text-muted-foreground">
-                  <Package className="w-5 h-5" />
+            <Card className="shadow-none border-border/50">
+              <CardHeader className="py-4">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Receipt className="w-4 h-4 text-muted-foreground" />
                   Custom Requirements
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="p-4 bg-muted/30 rounded-lg text-sm leading-relaxed italic">
-                  &quot;{order.customRequirements}&quot;
-                </div>
+                <p className="text-sm text-muted-foreground bg-muted/30 p-4 rounded-lg leading-relaxed border border-border/50">
+                  {order.customRequirements}
+                </p>
               </CardContent>
             </Card>
           )}
 
-          {order.paymentScreenshot && (
-            <div>
-              <Card className="border-none shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg font-semibold">
-                    Payment Screenshot
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center">
-                    <Image
-                      src={order.paymentScreenshot || "/placeholder.svg"}
-                      alt="Payment screenshot"
-                      width={200}
-                      height={200}
-                      className="object-contain"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+          {/* Payment Screenshot */}
+          {order.customer?.paymentScreenshot && (
+            <Card className="shadow-none border-border/50">
+              <CardHeader className="py-4">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                  Payment Screenshot
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="relative w-full max-w-sm aspect-[4/3] rounded-xl overflow-hidden border border-border/50 bg-muted/20">
+                  <Image
+                    src={order.customer.paymentScreenshot}
+                    alt="Payment screenshot"
+                    fill
+                    className="object-contain p-2"
+                  />
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
 
         {/* Sidebar - Right Side */}
         <div className="space-y-6">
           {/* Order Summary */}
-          <Card className="border-none shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
+          <Card className="shadow-none border-border/50">
+            <CardHeader className="bg-muted/30 border-b border-border/50 py-4">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-muted-foreground" />
                 Order Summary
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between text-sm">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium">
-                  ৳{Number(order.totalPrice).toLocaleString()}
-                </span>
+                <span className="font-medium">৳{Number(order.totalPrice).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Shipping</span>
-                <span className="font-medium text-green-600">Free</span>
+                <span className="font-medium">Free</span>
               </div>
-              <Separator className="my-2 bg-muted/50" />
-              <div className="flex justify-between items-center pt-2">
-                <span className="text-base font-bold">Total</span>
-                <span className="text-xl font-bold tracking-tight">
-                  ৳{Number(order.totalPrice).toLocaleString()}
-                </span>
+              <Separator className="bg-border/50" />
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Total</span>
+                <span className="text-xl font-bold tracking-tight">৳{Number(order.totalPrice).toLocaleString()}</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Customer Details */}
-          <Card className="border-none shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
+          <Card className="shadow-none border-border/50">
+            <CardHeader className="bg-muted/30 border-b border-border/50 py-4">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <UserIcon className="w-4 h-4 text-muted-foreground" />
                 Customer Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-start gap-3">
-                <div className="mt-1 p-2 bg-muted/50 rounded-full">
-                  <UserIcon className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Full Name
-                  </p>
-                  <p className="text-sm font-semibold">{order.fullName}</p>
+            <CardContent className="p-6 space-y-6">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Full Name</p>
+                <p className="text-sm font-medium">{order.customer?.fullName || "N/A"}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Contact</p>
+                <div className="space-y-2 mt-1">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    <span className="truncate">{order.customer?.email || "No email provided"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span>{order.customer?.phone || "N/A"}</span>
+                  </div>
                 </div>
               </div>
-
-              <div className="flex items-start gap-3">
-                <div className="mt-1 p-2 bg-muted/50 rounded-full">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <div className="space-y-1 text-wrap overflow-hidden">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Email Address
-                  </p>
-                  <p className="text-sm font-semibold break-all">
-                    {order.email || "N/A"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="mt-1 p-2 bg-muted/50 rounded-full">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Phone Number
-                  </p>
-                  <p className="text-sm font-semibold">{order.phone}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="mt-1 p-2 bg-muted/50 rounded-full">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Shipping Address
-                  </p>
-                  <p className="text-sm font-semibold leading-relaxed">
-                    {order.fullAddress}
-                  </p>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Shipping Address</p>
+                <div className="flex items-start gap-2 text-sm mt-1">
+                  <MapPin className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <span className="leading-relaxed">{order.customer?.fullAddress || "N/A"}</span>
                 </div>
               </div>
             </CardContent>

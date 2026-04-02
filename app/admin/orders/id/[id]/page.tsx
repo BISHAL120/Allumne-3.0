@@ -2,6 +2,7 @@ import { getOrderDetails } from "@/lib/data-layer/admin/admin";
 import React from "react";
 import OrderDetails from "@/components/admin/orders/id/order-details";
 import { notFound } from "next/navigation";
+import OrderNotFound from "@/components/admin/orders/order-not-found";
 
 
 interface OrderItem {
@@ -37,13 +38,12 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const order = await getOrderDetails({ order_id: id });
 
   if (!order) {
-    return notFound();
+    return <OrderNotFound />
   }
 
   return (
     <div className="min-h-screen">
-      Order Details Page
-      {/* <OrderDetails order={order as SingleOrderProps} /> */}
+      <OrderDetails order={order as unknown as Parameters<typeof OrderDetails>[0]["order"]} />
     </div>
   );
 };
