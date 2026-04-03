@@ -185,7 +185,7 @@ export async function PATCH(request: Request) {
 
     await logActivity({
       action: "PRODUCT_UPDATED",
-      description: `User updated product '${data.productName || id}'`,
+      description: `User updated product '${data.productName || id || "Unknown Product"}'`,
       entityId: id,
       entityType: "PRODUCT",
       userId: await getUserId(),

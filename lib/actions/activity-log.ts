@@ -104,8 +104,8 @@ export async function logActivity(params: LogActivityParams) {
     }
 
     if (!currentUserId) {
-      console.warn("Attempted to log activity without a user context:", params.description);
-      return { success: false, error: "No user context available for activity log" };
+      console.warn("Attempted to log activity without a user context:", params.description, "falling back to system user.");
+      currentUserId = "system";
     }
 
     const log = await db.activityLog.create({
@@ -145,8 +145,8 @@ export async function logActivityTx(
     }
 
     if (!currentUserId) {
-      console.warn("Attempted to log activity without a user context:", params.description);
-      return;
+      console.warn("Attempted to log activity without a user context:", params.description, "falling back to system user.");
+      currentUserId = "system";
     }
 
     await tx.activityLog.create({
