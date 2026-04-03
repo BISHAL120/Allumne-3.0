@@ -2,6 +2,7 @@
 
 import db from "@/lib/prisma";
 import { getServerSession } from "../get-session";
+import { logActivity } from "../actions/activity-log";
 
 interface CategorySeedOptions {
   count?: number;
@@ -34,6 +35,13 @@ export const generateCategories = async ({
 
   const result = await db.category.createMany({
     data: categories,
+  });
+
+  await logActivity({
+    action: "CATEGORY_CREATED",
+    description: `User generated ${count} categories via the Generator`,
+    entityType: "CATEGORY",
+    userId,
   });
 
   return result;

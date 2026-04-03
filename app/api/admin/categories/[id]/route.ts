@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { categoryFormSchema } from "@/components/admin/category/id/category-schema";
 import { deleteFirebaseImage } from "@/lib/firebase/deleteImage";
 import { uploadImageFirebase } from "@/lib/firebase/upload";
+import { logActivity, generateChangeMessage } from "@/lib/actions/activity-log";
+import { getUserId } from "@/lib/get-session";
 
 export async function PATCH(
   req: Request,
@@ -39,12 +41,36 @@ export async function PATCH(
       );
     }
 
+    const existingCategory = await db.category.findUnique({
+      where: { id: categoryId }
+    });
+
     const category = await db.category.update({
       where: {
         id: categoryId,
       },
       data: { ...validatedData, imageUrl },
     });
+
+    if (existingCategory) {
+      const message = await generateChangeMessage(`category '${category.name}'`, existingCategory, category, {
+        name: "Name",
+        desc: "Description",
+        slug: "Slug",
+        isFeatured: "Featured status",
+        imageUrl: "Image",
+      });
+
+      if (message) {
+        await logActivity({
+          action: "CATEGORY_UPDATED",
+          description: message,
+          entityId: category.id,
+          entityType: "CATEGORY",
+          userId: await getUserId(),
+        });
+      }
+    }
 
     return NextResponse.json(
       { message: "Category updated successfully", data: category },

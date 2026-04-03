@@ -36,6 +36,7 @@ model User {
   products      Product[]
   cartItems     CartItem[]
   orders        Order[]
+  activityLogs  ActivityLog[]
 
   @@unique([email])
   @@map("user")
@@ -226,3 +227,15 @@ model Customer {
   updatedAt         DateTime @updatedAt
   orders            Order[]
 }
+
+model ActivityLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  action      String
+  description String
+  entityId    String?
+  entityType  String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+

@@ -1,16 +1,17 @@
 import { CustomerInsights } from "./components/customer-insights"
 import { MetricsOverview } from "./components/metrics-overview"
-import { RecentTransactions } from "./components/recent-transactions"
+import { QuickActions } from "./components/quick-actions"
+import { RecentTransactions, ActivityLogItem } from "./components/recent-transactions"
 import { RevenueBreakdown } from "./components/revenue-breakdown"
 import { SalesChart } from "./components/sales-chart"
 import { TopProducts } from "./components/top-products"
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ activities }: { activities: ActivityLogItem[] }) {
   return (
     <div className="flex-1 space-y-6 px-6 pt-6">
         {/* Enhanced Header */}
 
-        {/* <div className="flex md:flex-row flex-col md:items-center justify-between gap-4 md:gap-6">
+        <div className="flex md:flex-row flex-col md:items-center justify-between gap-4 md:gap-6">
           <div className="flex flex-col gap-2">
             <h1 className="text-2xl font-bold tracking-tight">Business Dashboard</h1>
             <p className="text-muted-foreground">
@@ -18,7 +19,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <QuickActions />
-        </div> */}
+        </div>
 
         {/* Main Dashboard Grid */}
         <div className="@container/main space-y-6">
@@ -34,7 +35,7 @@ export default function AdminDashboard() {
 
           {/* Third Row - Two Column Layout */}
           <div className="grid gap-6 grid-cols-1 @5xl:grid-cols-2">
-            <RecentTransactions />
+            <RecentTransactions activities={activities} />
             <TopProducts />
           </div>
 

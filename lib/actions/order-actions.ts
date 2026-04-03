@@ -2,6 +2,8 @@
 
 import { CartItemFormValues, CustomerFormValues, OrderStatusFormValues } from "@/components/admin/orders/edit/schema";
 import db from "@/lib/prisma";
+import { logActivityTx, logActivity, generateChangeMessage } from "./activity-log";
+import { getUserId } from "../get-session";
 
 export async function searchProducts(query: string, skip: number = 0, take: number = 10) {
   try {
@@ -128,7 +130,7 @@ export async function createOrder(
 
       // 4. Create CartItems and Update Stock
       for (const item of orderData.items) {
-        // Fetch the product with its current variants
+        // Fetch the product with its current variants.
         const product = await tx.product.findUnique({
           where: { id: item.productId },
           select: {
@@ -203,6 +205,14 @@ export async function createOrder(
         });
       }
 
+      await logActivityTx(tx, {
+        action: "ORDER_CREATED",
+        description: `Order ${nextOrderNumber} created by user`,
+        entityId: order.id,
+        entityType: "ORDER",
+        userId: orderData.userId,
+      });
+
       return {
         success: true,
         orderId: order.id,
@@ -243,12 +253,19 @@ export const updateCartItems = async ({
       },
       select: {
         id: true,
+        orderNumber: true,
         totalPrice: true
       }
     });
 
     for (const item of changedItems) {
       console.log(`item ID: ${item.id} item: ${item}`)
+
+      // Fetch the old cart item to compare quantities
+      const oldCartItem = await tx.cartItem.findUnique({
+        where: { id: item.id },
+        select: { quantity: true, title: true, size: true }
+      });
 
 
       await tx.cartItem.update({
@@ -261,6 +278,24 @@ export const updateCartItems = async ({
           subTotal: Number(item.price) * item.quantity,
         }
       });
+
+      if (oldCartItem && oldCartItem.quantity !== item.quantity) {
+        await logActivityTx(tx, {
+          action: "ORDER_UPDATED",
+          description: `User updated order "${updatedOrder.orderNumber}" product quantity from ${oldCartItem.quantity} to ${item.quantity} for ${item.size} size of ${item.title}`,
+          entityId: orderId,
+          entityType: "ORDER",
+          userId: await getUserId(),
+        });
+      } else {
+        await logActivityTx(tx, {
+          action: "ORDER_UPDATED",
+          description: `Order "${updatedOrder.orderNumber}" cart item ${item.title} updated`,
+          entityId: orderId,
+          entityType: "ORDER",
+          userId: await getUserId(),
+        });
+      }
 
       // increase or Decrease the stock of the variant and also increase or decrease the total stock and total sold
 
@@ -332,7 +367,11 @@ export const updateCustomerInformation = async ({
   customerId: string;
   customer: CustomerFormValues;
 }) => {
-  await db.customer.update({
+  const oldCustomer = await db.customer.findUnique({
+    where: { id: customerId }
+  });
+
+  const updatedCustomer = await db.customer.update({
     where: {
       id: customerId,
     },
@@ -340,6 +379,26 @@ export const updateCustomerInformation = async ({
       ...customer,
     },
   });
+
+  if (oldCustomer) {
+    const message = await generateChangeMessage("Customer Information", oldCustomer, updatedCustomer, {
+      fullName: "Name",
+      email: "Email",
+      phone: "Phone",
+      fullAddress: "Address",
+      paymentScreenshot: "Payment Screenshot"
+    });
+
+    if (message) {
+      await logActivity({
+        action: "CUSTOMER_UPDATED",
+        description: message,
+        entityId: customerId,
+        entityType: "CUSTOMER",
+        userId: await getUserId(),
+      });
+    }
+  }
 }
 
 export const updateOrderStatus = async ({
@@ -349,12 +408,20 @@ export const updateOrderStatus = async ({
   orderId: string;
   status: OrderStatusFormValues;
 }) => {
-  await db.order.update({
+  const updatedOrder = await db.order.update({
     where: {
       id: orderId,
     },
     data: {
       ...status,
     },
+  });
+
+  await logActivity({
+    action: "ORDER_STATUS_CHANGED",
+    description: `Order ${updatedOrder.orderNumber} marked as ${status.status}`,
+    entityId: orderId,
+    entityType: "ORDER",
+    userId: await getUserId(),
   });
 }

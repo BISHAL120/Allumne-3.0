@@ -2,6 +2,8 @@
 
 import db from "@/lib/prisma";
 import { ProductStatus } from "@prisma/client";
+import { logActivity } from "./activity-log";
+import { getUserId } from "../get-session";
 
 interface QueueItem {
   id: string;
@@ -126,7 +128,7 @@ export async function restockProduct(id: string, amount: number) {
 
     const product = await db.product.findUnique({
       where: { id: productId },
-      select: { totalStock: true, variants: true },
+      select: { totalStock: true, variants: true, productName: true },
     });
 
     if (!product) {
@@ -162,19 +164,35 @@ export async function restockProduct(id: string, amount: number) {
         },
       });
 
-      return { success: true };
-    } else {
-      // Update overall product (fallback if no variants or updating simple product)
-      const newStock = product.totalStock + amount;
-
-      await db.product.update({
-        where: { id: productId },
-        data: {
-          totalStock: newStock,
-        },
+      await logActivity({
+        action: "STOCK_RESTOCKED",
+        description: `Restocked ${amount} items for product '${product.productName}' (Variant: ${variantSize})`,
+        entityId: productId,
+        entityType: "PRODUCT",
+        userId: await getUserId(),
       });
 
       return { success: true };
+    } else {
+       // Update overall product (fallback if no variants or updating simple product)
+       const newStock = product.totalStock + amount;
+
+       await db.product.update({
+         where: { id: productId },
+         data: {
+           totalStock: newStock,
+         },
+       });
+
+       await logActivity({
+         action: "STOCK_RESTOCKED",
+         description: `Restocked ${amount} items for product '${product.productName}'`,
+         entityId: productId,
+         entityType: "PRODUCT",
+         userId: await getUserId(),
+       });
+
+       return { success: true };
     }
   } catch (error) {
     console.error("Error restocking product:", error);

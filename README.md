@@ -40,10 +40,16 @@ A comprehensive web application designed to seamlessly manage products, stock le
 - Visual priority indicators (High / Medium / Low)
 - Manual restock capabilities with auto-removal from the queue
 
-### 6. Interactive Dashboard & Activity Log
+### 6. Comprehensive Activity Monitoring System
+- **Real-Time Tracking**: Every critical action in the system is logged and tracked in the database.
+- **Detailed Logs**: Captures the exact action, timestamp, entity affected (Order, Product, Category), and the user who performed it.
+- **Transactional Integrity**: Activity logs are written within the same database transactions as the primary operations (e.g., creating an order) to ensure 100% accuracy.
+- **Live Dashboard Widget**: The admin dashboard features a "Recent Transactions" widget that fetches and displays the latest system activities (e.g., "Order #1023 marked as Shipped", "Restocked 50 items for product 'Headphone'").
+- **Accountability**: Provides a clear audit trail of who did what and when, enhancing security and operational transparency.
+
+### 7. Interactive Dashboard
 - **Insights Overview**: Track Total Orders, Pending vs. Completed Orders, Revenue, and Low Stock Items
 - **Product Summary**: Quick view of top inventory items and their stock status
-- **Activity Log**: Real-time tracking of system actions (e.g., order creation, stock updates, queue additions)
 
 ## 🛠️ Tech Stack
 

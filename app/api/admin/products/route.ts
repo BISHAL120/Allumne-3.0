@@ -3,10 +3,11 @@ export const runtime = "nodejs";
 import { ImageObj } from "@prisma/client";
 import { deleteFirebaseImage } from "@/lib/firebase/deleteImage";
 import { uploadImageFirebase } from "@/lib/firebase/upload";
-import { getServerSession } from "@/lib/get-session";
+import { getServerSession, getUserId } from "@/lib/get-session";
 import db from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { v4 as uuIdV4 } from "uuid";
+import { logActivity } from "@/lib/actions/activity-log";
 
 export async function POST(request: Request) {
   try {
@@ -150,6 +151,14 @@ export async function POST(request: Request) {
       },
     });
 
+    await logActivity({
+      action: "PRODUCT_CREATED",
+      description: `User created product '${product.productName}'`,
+      entityId: product.id,
+      entityType: "PRODUCT",
+      userId,
+    });
+
     return NextResponse.json(
       { message: "Product Created successful", data: product },
       { status: 201 }
@@ -172,6 +181,14 @@ export async function PATCH(request: Request) {
     await db.product.update({
       where: { id },
       data,
+    });
+
+    await logActivity({
+      action: "PRODUCT_UPDATED",
+      description: `User updated product '${data.productName || id}'`,
+      entityId: id,
+      entityType: "PRODUCT",
+      userId: await getUserId(),
     });
 
     // Return success response

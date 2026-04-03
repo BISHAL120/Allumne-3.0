@@ -549,6 +549,30 @@ export const getOrderDetailsById = async (orderId: string) => {
     return order;
 }
 
+export const getRecentActivities = async (limit = 5) => {
+    await isAdmin();
+
+    const activities = await db.activityLog.findMany({
+        take: limit,
+        orderBy: {
+            createdAt: "desc"
+        },
+        select: {
+            id: true,
+            action: true,
+            description: true,
+            createdAt: true,
+            user: {
+                select: {
+                    name: true
+                }
+            }
+        }
+    });
+
+    return activities;
+}
+
 interface AdminPanelReportProps {
     start?: Date;
     end?: Date;

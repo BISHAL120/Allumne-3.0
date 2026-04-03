@@ -2,6 +2,8 @@ import { categoryFormSchema } from "@/components/admin/category/id/category-sche
 import { uploadImageFirebase } from "@/lib/firebase/upload";
 import db from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/actions/activity-log";
+import { getServerSession, getUserId } from "@/lib/get-session";
 
 export async function POST(req: Request) {
     try {
@@ -46,6 +48,15 @@ export async function POST(req: Request) {
                 metaTitle: validatedData.metaTitle,
                 metaDescription: validatedData.metaDescription,
             },
+        });
+
+
+        await logActivity({
+            action: "CATEGORY_CREATED",
+            description: `User created category '${result.name}'`,
+            entityId: result.id,
+            entityType: "CATEGORY",
+            userId: await getUserId(),
         });
 
         return NextResponse.json(

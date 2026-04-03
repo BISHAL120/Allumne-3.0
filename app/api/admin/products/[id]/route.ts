@@ -1,7 +1,9 @@
 export const runtime = "nodejs";
 
+import { generateChangeMessage, logActivity } from "@/lib/actions/activity-log";
 import { storage } from "@/lib/firebase/firebase";
 import { uploadImageFirebase } from "@/lib/firebase/upload";
+import { getUserId } from "@/lib/get-session";
 import db from "@/lib/prisma";
 import { deleteObject, ref } from "firebase/storage";
 import { NextRequest, NextResponse } from "next/server";
@@ -100,6 +102,10 @@ export async function PATCH(
         }
 
 
+        const existingProduct = await db.product.findUnique({
+            where: { id }
+        });
+
         const updateProduct = await db.product.update({
             where: { id },
             data: {
@@ -108,6 +114,28 @@ export async function PATCH(
                 thumbnail: thumbnailURL,
             },
         });
+
+        if (existingProduct) {
+            const message = await generateChangeMessage(`product '${updateProduct.productName}'`, existingProduct, updateProduct, {
+                productName: "Name",
+                slug: "Slug",
+                status: "Status",
+                isFeatured: "Featured status",
+                shortDescription: "Short description",
+                categoryId: "Category",
+                thumbnail: "Thumbnail"
+            });
+
+            if (message) {
+                await logActivity({
+                    action: "PRODUCT_UPDATED",
+                    description: message,
+                    entityId: updateProduct.id,
+                    entityType: "PRODUCT",
+                    userId: await getUserId(),
+                });
+            }
+        }
 
         return NextResponse.json(
             { data: updateProduct, message: "Product updated successfully" },

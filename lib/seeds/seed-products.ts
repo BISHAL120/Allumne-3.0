@@ -3,6 +3,7 @@
 import db from "@/lib/prisma";
 import { DiscountType, ProductStatus, productType } from "@prisma/client";
 import { getServerSession } from "../get-session";
+import { logActivity } from "../actions/activity-log";
 
 interface SeedOptions {
   categoryId: string;
@@ -71,6 +72,19 @@ export const generateProducts = async ({
 
   await db.product.createMany({
     data: products,
+  });
+
+  const category = await db.category.findUnique({
+    where: { id: categoryId },
+    select: { name: true }
+  });
+
+  await logActivity({
+    action: "PRODUCT_CREATED",
+    description: `User generated ${count} products in '${category?.name || categoryId}' category`,
+    entityId: categoryId,
+    entityType: "CATEGORY",
+    userId,
   });
 
   return products;
