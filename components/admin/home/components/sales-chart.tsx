@@ -5,22 +5,6 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-
-const salesData = [
-  { month: "Jan", sales: 12500, target: 15000 },
-  { month: "Feb", sales: 18200, target: 15000 },
-  { month: "Mar", sales: 16800, target: 15000 },
-  { month: "Apr", sales: 22400, target: 20000 },
-  { month: "May", sales: 24600, target: 20000 },
-  { month: "Jun", sales: 28200, target: 25000 },
-  { month: "Jul", sales: 31500, target: 25000 },
-  { month: "Aug", sales: 29800, target: 25000 },
-  { month: "Sep", sales: 33200, target: 30000 },
-  { month: "Oct", sales: 35100, target: 30000 },
-  { month: "Nov", sales: 38900, target: 35000 },
-  { month: "Dec", sales: 42300, target: 35000 },
-]
 
 const chartConfig = {
   sales: {
@@ -33,8 +17,10 @@ const chartConfig = {
   },
 }
 
-export function SalesChart() {
-  const [timeRange, setTimeRange] = useState("12m")
+export function SalesChart({ data }: { data: { month: string, sales: number, target: number }[] }) {
+  const [timeRange, setTimeRange] = useState("6m")
+  const monthsToShow = Number(timeRange.replace("m", ""))
+  const displayData = data.slice(-monthsToShow)
 
   return (
     <Card className="cursor-pointer">
@@ -54,15 +40,12 @@ export function SalesChart() {
               <SelectItem value="12m" className="cursor-pointer">Last 12 months</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" className="cursor-pointer">
-            Export
-          </Button>
         </div>
       </CardHeader>
       <CardContent className="p-0 pt-6">
         <div className="px-6 pb-6">
           <ChartContainer config={chartConfig} className="h-[350px] w-full">
-            <AreaChart data={salesData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+            <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--color-sales)" stopOpacity={0.4} />

@@ -6,50 +6,51 @@ import type { PieSectorDataItem } from "recharts/types/polar/Pie"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartStyle, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
 
-const revenueData = [
-  { category: "subscriptions", value: 45, amount: 24500, fill: "var(--color-subscriptions)" },
-  { category: "sales", value: 30, amount: 16300, fill: "var(--color-sales)" },
-  { category: "services", value: 15, amount: 8150, fill: "var(--color-services)" },
-  { category: "partnerships", value: 10, amount: 5430, fill: "var(--color-partnerships)" },
-]
-
-const chartConfig = {
-  revenue: {
-    label: "Revenue",
-  },
-  amount: {
-    label: "Amount",
-  },
-  subscriptions: {
-    label: "Subscriptions",
-    color: "var(--chart-1)",
-  },
-  sales: {
-    label: "One-time Sales", 
-    color: "var(--chart-2)",
-  },
-  services: {
-    label: "Services",
-    color: "var(--chart-3)",
-  },
-  partnerships: {
-    label: "Partnerships",
-    color: "var(--chart-4)",
-  },
-}
-
-export function RevenueBreakdown() {
+export function RevenueBreakdown({ data }: { data: { category: string, amount: number }[] }) {
   const id = "revenue-breakdown"
-  const [activeCategory, setActiveCategory] = React.useState("sales")
+
+  // Process data: calculate percentages and colors
+  const totalAmount = data.reduce((acc, curr) => acc + curr.amount, 0) || 1;
+  const processedData = data.map((item, index) => ({
+    category: item.category.toLowerCase().replace(/\s+/g, '-'),
+    label: item.category,
+    value: Math.round((item.amount / totalAmount) * 100),
+    amount: item.amount,
+    fill: `hsl(var(--chart-${(index % 5) + 1}))`
+  }));
+
+  // Create chart config dynamically
+  const chartConfig: Record<string, { label: string; color?: string }> = {
+    revenue: { label: "Revenue" },
+    amount: { label: "Amount" }
+  };
+  processedData.forEach((item, index) => {
+    chartConfig[item.category] = {
+      label: item.label,
+      color: `hsl(var(--chart-${(index % 5) + 1}))`
+    }
+  });
+
+  const [activeCategory, setActiveCategory] = React.useState(processedData[0]?.category || "")
 
   const activeIndex = React.useMemo(
-    () => revenueData.findIndex((item) => item.category === activeCategory),
-    [activeCategory]
+    () => processedData.findIndex((item) => item.category === activeCategory),
+    [activeCategory, processedData]
   )
   
-  const categories = React.useMemo(() => revenueData.map((item) => item.category), [])
+  const categories = React.useMemo(() => processedData.map((item) => item.category), [processedData])
+
+  if (processedData.length === 0) {
+    return (
+      <Card className="flex flex-col cursor-pointer">
+        <CardHeader>
+          <CardTitle>Revenue Breakdown</CardTitle>
+          <CardDescription>No data available</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card data-chart={id} className="flex flex-col cursor-pointer">
@@ -57,7 +58,7 @@ export function RevenueBreakdown() {
       <CardHeader className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-2">
         <div>
           <CardTitle>Revenue Breakdown</CardTitle>
-          <CardDescription>Revenue distribution by source</CardDescription>
+          <CardDescription>Revenue distribution by product category</CardDescription>
         </div>
         <div className="flex items-center space-x-2">
           <Select value={activeCategory} onValueChange={setActiveCategory}>
@@ -95,9 +96,6 @@ export function RevenueBreakdown() {
               })}
             </SelectContent>
           </Select>
-          <Button variant="outline" className="cursor-pointer">
-            Export
-          </Button>
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 justify-center">
@@ -114,7 +112,7 @@ export function RevenueBreakdown() {
                   content={<ChartTooltipContent hideLabel />}
                 />
                 <Pie
-                  data={revenueData}
+                  data={processedData}
                   dataKey="amount"
                   nameKey="category"
                   innerRadius={60}
@@ -149,7 +147,7 @@ export function RevenueBreakdown() {
                               y={viewBox.cy}
                               className="fill-foreground text-3xl font-bold"
                             >
-                              ${(revenueData[activeIndex].amount / 1000).toFixed(0)}K
+                              ${(processedData[activeIndex].amount / 1000).toFixed(0)}K
                             </tspan>
                             <tspan
                               x={viewBox.cx}
@@ -169,7 +167,7 @@ export function RevenueBreakdown() {
           </div>
           
           <div className="flex flex-col justify-center space-y-4">
-            {revenueData.map((item, index) => {
+            {processedData.map((item, index) => {
               const config = chartConfig[item.category as keyof typeof chartConfig]
               const isActive = index === activeIndex
               
