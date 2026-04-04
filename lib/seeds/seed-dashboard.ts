@@ -1,4 +1,5 @@
 import { PrismaClient, OrderStatus } from '@prisma/client'
+import { generateProductsForSeed } from './seed-products'
 
 const prisma = new PrismaClient()
 
@@ -31,35 +32,18 @@ async function main() {
     customers.push(customer)
   }
 
-  console.log('Creating dummy products...')
-  const products = []
-  const productData = [
-    { name: 'iPhone 13 Pro', stock: 3, price: 999 },
-    { name: 'MacBook Air M2', stock: 0, price: 1199 },
-    { name: 'AirPods Pro', stock: 45, price: 249 },
-    { name: 'iPad Pro', stock: 12, price: 799 },
-    { name: 'Apple Watch', stock: 4, price: 399 },
-    { name: 'Magic Keyboard', stock: 20, price: 99 },
-  ]
-
-  for (let i = 0; i < productData.length; i++) {
-    const pd = productData[i]
-    const product = await prisma.product.create({
-      data: {
-        productName: pd.name,
-        shortDescription: 'Dummy description',
-        fullDescription: 'Dummy full description for ' + pd.name,
-        slug: `dummy-product-${i}-${Date.now()}`,
-        status: 'PUBLISHED',
-        type: 'PHYSICAL',
-        totalStock: pd.stock,
-        userId: user.id,
-        categoryId: category.id,
-        thumbnail: 'https://via.placeholder.com/150',
-      }
-    })
-    products.push({ ...product, price: pd.price })
-  }
+  console.log('Creating dummy products using seed-products.ts...')
+  const seededProducts = await generateProductsForSeed({
+    categoryId: category.id,
+    userId: user.id,
+    count: 6,
+  })
+  const products = seededProducts.map((product) => ({
+    id: product.id,
+    productName: product.productName,
+    thumbnail: product.thumbnail,
+    price: Number(product.variants[0]?.price ?? 100),
+  }))
 
   console.log('Creating dummy orders...')
   const statuses = [OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED]

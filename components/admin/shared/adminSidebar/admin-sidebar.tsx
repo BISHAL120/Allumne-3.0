@@ -20,6 +20,7 @@ import {
   ShieldAlertIcon,
   TrafficCone,
   Trash2,
+  Users,
 } from "lucide-react";
 import * as React from "react";
 
@@ -71,6 +72,21 @@ const data = {
         {
           title: "All Orders",
           url: "/admin/orders",
+        },
+      ],
+    },
+    {
+      title: "Customer",
+      url: "#",
+      icon: Users,
+      items: [
+        {
+          title: "Statistics",
+          url: "/admin/customers/statistics",
+        },
+        {
+          title: "Customer List",
+          url: "/admin/customers/list",
         },
       ],
     },
@@ -130,6 +146,10 @@ const data = {
       url: "#",
       icon: Cable,
       items: [
+        {
+          title: "Dashboard",
+          url: "/admin/generator/dashboard",
+        },
         {
           title: "Products",
           url: "/admin/generator/products",

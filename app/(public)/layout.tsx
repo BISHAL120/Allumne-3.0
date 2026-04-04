@@ -13,7 +13,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* <Navbar2 /> */}
         <div className="relative overflow-hidden">
           {children}
-          <CartComponent />
+          {/* <CartComponent /> */}
           <WhatsAppButton />
         </div>
         {/* <Footer /> */}

@@ -10,18 +10,28 @@ interface SeedOptions {
   count?: number;
 }
 
+interface SeedScriptOptions extends SeedOptions {
+  userId: string;
+}
 
-export const generateProducts = async ({
-    categoryId,
-    count = 10,
-}: SeedOptions) => {
-    const products = [];
-    const session = await getServerSession();
-    const userId = session?.user?.id;
+type SeedProductRecord = {
+  id: string;
+  productName: string;
+  thumbnail: string | null;
+  variants: { size: string; price: number; stock?: number | null; discountType?: DiscountType | null; discountPrice?: number | null }[];
+};
 
-    if (!userId) {
-        throw new Error("Unauthorized: Please login first");
-    }
+const buildSeedProductsData = ({
+  categoryId,
+  userId,
+  count,
+}: {
+  categoryId: string;
+  userId: string;
+  count: number;
+}) => {
+  const products = [];
+  const generatedSlugs: string[] = [];
 
   for (let i = 1; i <= count; i++) {
     const variants = [
@@ -46,11 +56,14 @@ export const generateProducts = async ({
       0,
     );
 
+    const slug = `product-${i}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    generatedSlugs.push(slug);
+
     products.push({
       productName: `Product ${i}`,
       shortDescription: `Short description for Product ${i}`,
       fullDescription: `Full description for Product ${i}. This is a detailed description with more than 20 characters as required by the schema.`,
-      slug: `product-${i}-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+      slug,
       status: ProductStatus.PUBLISHED,
       type: productType.PHYSICAL,
       variants,
@@ -69,6 +82,49 @@ export const generateProducts = async ({
       metaDescription: `Meta description for Product ${i}`,
     });
   }
+
+  return { products, generatedSlugs };
+};
+
+export const generateProductsForSeed = async ({
+  categoryId,
+  userId,
+  count = 10,
+}: SeedScriptOptions): Promise<SeedProductRecord[]> => {
+  const { products, generatedSlugs } = buildSeedProductsData({ categoryId, userId, count });
+
+  await db.product.createMany({
+    data: products,
+  });
+
+  return db.product.findMany({
+    where: {
+      slug: {
+        in: generatedSlugs,
+      }
+    },
+    select: {
+      id: true,
+      productName: true,
+      thumbnail: true,
+      variants: true,
+    }
+  });
+};
+
+
+export const generateProducts = async ({
+    categoryId,
+    count = 10,
+}: SeedOptions) => {
+    const session = await getServerSession();
+    const userId = session?.user?.id;
+
+    if (!userId) {
+        throw new Error("Unauthorized: Please login first");
+    }
+
+  const { products } = buildSeedProductsData({ categoryId, userId, count });
 
   await db.product.createMany({
     data: products,
