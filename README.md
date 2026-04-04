@@ -1,57 +1,89 @@
 # Smart Inventory & Order Management System
 
-A comprehensive web application designed to seamlessly manage products, stock levels, customer orders, and fulfillment workflows with intelligent validation and conflict handling.
+A full-stack admin system to manage products, inventory, customers, and orders with transactional stock updates, analytics dashboards, and activity logging.
 
-## 🌟 Key Features
+## Key Features
 
-### 1. Authentication & Security
-- Secure Email & Password authentication
-- Role-based access control (Admin / Manager)
-- Automatic redirect to the Dashboard upon successful login
-- Quick Demo Login functionality for reviewers
+### 1. Authentication & Access Control
+- Email/password authentication.
+- Role-based access for admin workflows.
+- Protected admin data-layer functions (admin checks before analytics/data reads).
 
 ### 2. Product & Category Management
-- **Categories**: Create and manage product categories (e.g., Electronics, Grocery, Clothing).
-- **Products**: Manually add products with detailed attributes:
-  - Product Name & Category
-  - Price & Stock Quantity
-  - Minimum Stock Threshold (for automated restock queueing)
-  - Status management (Active / Out of Stock / Inactive)
+- Category CRUD support for organizing products.
+- Product management with:
+  - `productName`, category, slug, price
+  - variant-based inventory (`size`, `stock`)
+  - `totalStock` and `totalSold` tracking
+  - `restockAlertThreshold` for low stock monitoring
 
-### 3. Order Management System
-- Create new orders with multiple products
-- Update order statuses (Pending, Confirmed, Shipped, Delivered, Cancelled)
-- View order history and details
-- Auto-calculated total pricing
+### 3. Order Management
+- Create order with existing/new customer linking.
+- Multi-item cart in an order (via `cartItem` rows).
+- Update:
+  - order status (`PENDING`, `CONFIRMED`, `SHIPPED`, `DELIVERED`, `CANCELLED`)
+  - customer info from order edit page
+  - cart item quantity and price inside an existing order
 
-### 4. Intelligent Stock Handling & Conflict Detection
-- **Auto-Deduction**: Stock is automatically deducted when orders are placed
-- **Conflict Prevention**: 
-  - Prevents adding duplicate products to a single order
-  - Blocks ordering of inactive or unavailable products
-- **Stock Validation**:
-  - Warns if requested quantity exceeds available stock ("Only X items available")
-  - Prevents order confirmation if stock is insufficient
-  - Auto-updates product status to "Out of Stock" when inventory reaches 0
+### 4. Order Quantity Update Synchronization
+- Order item edits run in a **single transaction** to keep data consistent.
+- When order product quantity changes:
+  - `cartItem.quantity` and `cartItem.subTotal` are updated.
+  - Product variant stock is adjusted by the quantity delta.
+  - Product `totalStock` is recalculated from all variants.
+  - Product `totalSold` is updated with guard (`>= 0`).
+  - Order `totalPrice` is updated from recalculated cart total.
+- Validation rules:
+  - Blocks quantity increase when variant stock is insufficient.
+  - Supports quantity decrease (stock is restored back correctly).
+- Result: all order, inventory, and analytics views stay synchronized across the app.
 
-### 5. Restock Queue (Low Stock Management)
-- Automatically queues products falling below their minimum stock threshold
-- Organized by lowest stock first
-- Visual priority indicators (High / Medium / Low)
-- Manual restock capabilities with auto-removal from the queue
+### 5. Dashboard & Analytics
+- Dynamic admin dashboard with live DB-driven metrics:
+  - Today vs yesterday orders
+  - Pending/delivered counts and completion rate
+  - Revenue today vs yesterday
+  - Low stock product count
+- Additional analytics sections:
+  - monthly sales chart with historical target baseline
+  - revenue breakdown by category
+  - top low-stock products
+  - customer growth/repeat/active trends
+  - recent activity log feed
 
-### 6. Comprehensive Activity Monitoring System
-- **Real-Time Tracking**: Every critical action in the system is logged and tracked in the database.
-- **Detailed Logs**: Captures the exact action, timestamp, entity affected (Order, Product, Category), and the user who performed it.
-- **Transactional Integrity**: Activity logs are written within the same database transactions as the primary operations (e.g., creating an order) to ensure 100% accuracy.
-- **Live Dashboard Widget**: The admin dashboard features a "Recent Transactions" widget that fetches and displays the latest system activities (e.g., "Order #1023 marked as Shipped", "Restocked 50 items for product 'Headphone'").
-- **Accountability**: Provides a clear audit trail of who did what and when, enhancing security and operational transparency.
+### 6. Customer Module (Split Pages)
+- Sidebar has a dedicated `Customer` dropdown with:
+  - `Statistics` page
+  - `Customer List` page
+- `Statistics` page includes:
+  - total customers
+  - new customers this month
+  - active customers in last 30 days
+  - repeat customers
+  - average order value
+  - top customers by total spent
+- `Customer List` page includes:
+  - search (name/phone/email)
+  - filter (`all`, `with_orders`, `without_orders`, `repeat`)
+  - sort (`newest`, `oldest`, `name_asc`, `name_desc`)
+  - server-side pagination
 
-### 7. Interactive Dashboard
-- **Insights Overview**: Track Total Orders, Pending vs. Completed Orders, Revenue, and Low Stock Items
-- **Product Summary**: Quick view of top inventory items and their stock status
+### 7. Restock Queue & Low Stock Management
+- Low-stock queue generated from product/variant inventory.
+- Priority tagging (`High`, `Medium`, `Low`) based on stock.
+- Restock action updates inventory and writes activity logs.
 
-## 🛠️ Tech Stack
+### 8. Activity Monitoring & Audit Trail
+- Logs key operations (order create/update/status changes, customer updates, stock restocks).
+- Activity writes are coupled to data changes for reliable auditability.
+- Dashboard shows recent transactions for operational transparency.
+
+### 9. Seeder Utilities
+- Seed scripts for dashboard/customer/order/product test data.
+- Product generation in dashboard seed reuses shared product seed logic.
+- Admin seed dashboard route/UI available for quick data population in development.
+
+## Tech Stack
 
 - **Frontend**: Next.js 15 (App Router), React, Tailwind CSS, shadcn/ui
 - **State Management & Forms**: React Hook Form, Zod (Validation)
@@ -59,7 +91,7 @@ A comprehensive web application designed to seamlessly manage products, stock le
 - **Authentication**: Custom Auth Implementation / NextAuth (Depending on setup)
 - **Deployment**: Vercel (Frontend & Serverless Functions)
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js (v18+)
@@ -88,13 +120,13 @@ A comprehensive web application designed to seamlessly manage products, stock le
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 📦 Deployment
+## Deployment
 
 This project is configured for easy deployment on Vercel. Connect your GitHub repository to Vercel and it will automatically handle the build and deployment process.
 
 - **Live URL**: [Add your live URL here]
 - **GitHub Repository**: [Add your repo link here]
 
-## 📝 License
+## License
 
 This project is open-source and available under the MIT License.

@@ -242,6 +242,7 @@ export const updateCartItems = async ({
 }) => {
 
   const normalizedTotalPrice = Number(totalPrice);
+  const userId = await getUserId();
 
   const result = await db.$transaction(async (tx) => {
     const updatedOrder = await tx.order.update({
@@ -259,8 +260,6 @@ export const updateCartItems = async ({
     });
 
     for (const item of changedItems) {
-      console.log(`item ID: ${item.id} item: ${item}`)
-
       // Fetch the old cart item to compare quantities
       const oldCartItem = await tx.cartItem.findUnique({
         where: { id: item.id },
@@ -285,7 +284,7 @@ export const updateCartItems = async ({
           description: `User updated order "${updatedOrder.orderNumber}" product quantity from ${oldCartItem.quantity} to ${item.quantity} for ${item.size} size of ${item.title}`,
           entityId: orderId,
           entityType: "ORDER",
-          userId: await getUserId(),
+          userId,
         });
       } else {
         await logActivityTx(tx, {
@@ -293,7 +292,7 @@ export const updateCartItems = async ({
           description: `Order "${updatedOrder.orderNumber}" cart item ${item.title} updated`,
           entityId: orderId,
           entityType: "ORDER",
-          userId: await getUserId(),
+          userId,
         });
       }
 
@@ -316,25 +315,33 @@ export const updateCartItems = async ({
 
       // 2. check if the requested variant stock available
       const variant = product.variants.find((v) => v.size === item.size);
-      if(variant?.stock && variant?.stock < item.changedQuantity) {
+      if (!variant) {
+        throw new Error(`Variant with size "${item.size}" not found for product "${product.productName}".`);
+      }
+
+      // Only validate inventory when quantity increases in an existing order.
+      if (item.changedQuantity > 0 && (variant.stock ?? 0) < item.changedQuantity) {
         throw new Error(`Insufficient stock for product "${product.productName}" (Size: ${item.size}). Available: ${variant?.stock || 0}, Requested: ${item.changedQuantity}`);
       }
 
 
       // 3. update the variant stock
       const updatedVariants = product.variants.map((variant) => {
-        if (variant.size === item.size && variant?.stock) {
+        if (variant.size === item.size) {
           return {
             ...variant,
-            stock: variant?.stock - item.changedQuantity,
+            stock: Math.max(0, (variant.stock ?? 0) - item.changedQuantity),
           };
         }
         return variant;
       });
 
       // 4. update the product stock and total sold
-      const newTotalStock = Math.max(0, product.totalStock - item.changedQuantity);
-      const newTotalSold = product.totalSold + item.changedQuantity;
+      const newTotalStock = updatedVariants.reduce(
+        (acc, variant) => acc + (Number(variant.stock) || 0),
+        0
+      );
+      const newTotalSold = Math.max(0, product.totalSold + item.changedQuantity);
 
       // 5. update the product
       await tx.product.update({
@@ -353,8 +360,6 @@ export const updateCartItems = async ({
       order: updatedOrder,
     };
   });
-
-  console.log("Update Cart Items Result:", result);
 
   return result;
 }
