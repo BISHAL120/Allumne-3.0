@@ -26,12 +26,12 @@ export default function UnAuthorizedPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-linear-to-br from-green-50 to-green-100 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="w-full max-w-md animate-fade-in-up">
           {/* Animated SVG Lock Icon */}
           <div className="flex justify-center mb-6 animate-sway">
             <svg
-              className="w-24 h-24 text-green-600"
+              className="w-24 h-24 text-destructive"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -48,19 +48,19 @@ export default function UnAuthorizedPage() {
           </div>
 
           {/* Title */}
-          <h1 className="text-3xl md:text-4xl font-bold text-green-800 text-center mb-2 animate-fade-in">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-2 animate-fade-in">
             Unauthorized Access
           </h1>
 
           {/* Subtitle */}
-          <p className="text-green-700 text-center mb-8 animate-fade-in-delay">
+          <p className="text-muted-foreground text-center mb-8 animate-fade-in-delay">
             Sorry, you don’t have permission to view this page.
           </p>
 
           {/* Interactive Button */}
           <button
             onClick={handleGoHome}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-transform duration-300 hover:scale-105 active:scale-95"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 px-6 rounded-lg shadow-lg transition-transform duration-300 hover:scale-105 active:scale-95"
           >
             <span className="flex items-center justify-center gap-2">
               <svg
@@ -82,7 +82,7 @@ export default function UnAuthorizedPage() {
           {/* Logout Button */}
           <button
             onClick={() => handleLogout()}
-            className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-transform duration-300 hover:scale-105 active:scale-95"
+            className="w-full mt-4 bg-destructive hover:bg-destructive/90 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-transform duration-300 hover:scale-105 active:scale-95"
           >
             <span className="flex items-center justify-center gap-2">
               <svg

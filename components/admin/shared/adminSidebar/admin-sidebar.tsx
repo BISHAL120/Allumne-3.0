@@ -11,6 +11,7 @@ import {
   FileMinus,
   Frame,
   GalleryVerticalEnd,
+  Layers,
   ListOrdered,
   Map,
   Package,
@@ -94,11 +95,6 @@ const data = {
       icon: Package,
       isActive: false,
       items: [
-        {
-          title: "Restock Queue",
-          url: "/admin/products/restock",
-          icon: ShieldAlertIcon,
-        },
         { title: "Add Product", url: "/admin/products/add", icon: PlusSquare },
         { title: "All Products", url: "/admin/products", icon: ListOrdered },
         {
@@ -115,6 +111,17 @@ const data = {
           title: "Deleted Products",
           url: "/admin/products/deleted",
           icon: Trash2,
+        },
+      ],
+    },
+    {
+      title: "Queue",
+      url: "#",
+      icon: Layers,
+      items: [
+        {
+          title: "Restock Queue",
+          url: "/admin/products/restock",
         },
       ],
     },

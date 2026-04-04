@@ -76,7 +76,7 @@ export default function LandingPage() {
             >
               <motion.div variants={fadeIn}>
                 <Badge variant="secondary" className="px-3 py-1 text-sm mb-4">
-                  v2.0 is now live 🎉
+                  v1.0 is now live 🎉
                 </Badge>
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight">
                   Intelligent <span className="text-primary">Inventory</span> & Order Management
@@ -111,7 +111,7 @@ export default function LandingPage() {
             transition={{ duration: 1, delay: 0.4 }}
             className="container mx-auto px-4 md:px-6 mt-16 relative"
           >
-            <div className="relative rounded-xl border bg-background shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9]">
+            <div className="relative rounded-xl border bg-background shadow-2xl overflow-hidden aspect-video md:aspect-21/9">
               <div className="absolute top-0 w-full h-12 bg-muted/50 border-b flex items-center px-4 gap-2">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
