@@ -40,7 +40,7 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
-      <Link href="/admin/dashboard">
+      <Link href="/admin">
         <SidebarMenuButton
           tooltip="Dashboard"
           isActive={pathname === "/admin"}
