@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { Box, ChartColumnStacked, ChevronRight, DatabaseSearchIcon, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -40,6 +40,16 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <Link href="/admin/dashboard">
+        <SidebarMenuButton
+          tooltip="Dashboard"
+          isActive={pathname === "/admin"}
+          className="data-[state=true]:bg-transparent"
+        >
+          <ChartColumnStacked className="size-4" />
+          <span>Dashboard</span>
+        </SidebarMenuButton>
+      </Link>
       <SidebarMenu>
         {items.map((item) => {
           const isSubItemActive = item.items?.some(
