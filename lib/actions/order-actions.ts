@@ -250,6 +250,8 @@ export async function createOrder(orderData: OrderInput): Promise<CreateOrderRes
         orderId: order.id,
         orderNumber,
       } as const;
+    }, {
+      timeout: 15000,
     });
 
     // -----------------------------
@@ -407,6 +409,8 @@ export const updateCartItems = async ({
     return {
       order: updatedOrder,
     };
+  }, {
+    timeout: 15000,
   });
 
   return result;
