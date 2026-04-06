@@ -83,150 +83,198 @@ export type CreateOrderResponse =
   | { success: true; orderId: string; orderNumber: string }
   | { success: false; error: string };
 
-export async function createOrder(
-  orderData: OrderInput
-): Promise<CreateOrderResponse> {
+export async function createOrder(orderData: OrderInput): Promise<CreateOrderResponse> {
   try {
-    const result = await db.$transaction(async (tx) => {
-      // 1. Find or Create Customer
-      let customerId = orderData.customer.id;
+    // -----------------------------
+    // 1. Handle Customer (outside transaction)
+    // -----------------------------
+    let customerId = orderData.customer.id;
 
-      if (customerId === "NEW") {
-        const existingCustomer = await tx.customer.findFirst({
-          where: { phone: orderData.customer.phone },
+    if (customerId === "NEW") {
+      const existingCustomer = await db.customer.findFirst({
+        where: { phone: orderData.customer.phone },
+      });
+
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        const newCustomer = await db.customer.create({
+          data: {
+            fullName: orderData.customer.name,
+            phone: orderData.customer.phone,
+            fullAddress: orderData.customer.address,
+            email: orderData.customer.email || null,
+          },
         });
 
-        if (existingCustomer) {
-          customerId = existingCustomer.id;
-        } else {
-          const newCustomer = await tx.customer.create({
-            data: {
-              fullName: orderData.customer.name,
-              phone: orderData.customer.phone,
-              fullAddress: orderData.customer.address,
-              email: orderData.customer.email || null,
+        customerId = newCustomer.id;
+      }
+    }
 
-            },
-          });
-          customerId = newCustomer.id;
-        }
+    // -----------------------------
+    // 2. Fetch all products (ONE QUERY)
+    // -----------------------------
+    const productIds = orderData.items.map((i) => i.productId);
+
+    const products = await db.product.findMany({
+      where: {
+        id: { in: productIds },
+      },
+    });
+
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    // -----------------------------
+    // 3. Prepare updates (NO DB CALLS HERE)
+    // -----------------------------
+    const productUpdates: {
+      id: string;
+      variants: any[];
+      totalStock: number;
+      totalSold: number;
+    }[] = [];
+
+    const cartItemsData: any[] = [];
+
+    for (const item of orderData.items) {
+      const product = productMap.get(item.productId);
+
+      if (!product) {
+        throw new Error(`Product "${item.name}" not found`);
       }
 
-      // 2. Get the next order number
-      const orderCount = await tx.order.count();
-      const nextOrderNumber = `ORD-${String(orderCount + 1).padStart(6, "0")}`;
+      if (product.status !== "PUBLISHED") {
+        throw new Error(
+          `Product "${item.name}" is not available (Status: ${product.status})`
+        );
+      }
 
-      // 3. Create the Order
+      let variantFound = false;
+
+      const updatedVariants = product.variants.map((variant: any) => {
+        if (variant.size === item.size) {
+          variantFound = true;
+
+          const currentStock = variant.stock || 0;
+
+          if (currentStock < item.quantity) {
+            throw new Error(
+              `Insufficient stock for "${item.name}" (${item.size}). Available: ${currentStock}`
+            );
+          }
+
+          return {
+            ...variant,
+            stock: currentStock - item.quantity,
+          };
+        }
+        return variant;
+      });
+
+      if (!variantFound) {
+        throw new Error(
+          `Variant "${item.size}" not found for "${item.name}"`
+        );
+      }
+
+      const newTotalStock = updatedVariants.reduce(
+        (acc, v) => acc + (Number(v.stock) || 0),
+        0
+      );
+
+      const newTotalSold = product.totalSold + item.quantity;
+
+      productUpdates.push({
+        id: item.productId,
+        variants: updatedVariants,
+        totalStock: newTotalStock,
+        totalSold: newTotalSold,
+      });
+
+      cartItemsData.push({
+        title: item.name,
+        thumbnail: product.thumbnail || "",
+        size: item.size || "N/A",
+        price: item.price,
+        subTotal: item.total,
+        quantity: item.quantity,
+        userId: orderData.userId,
+        productId: item.productId,
+      });
+    }
+
+    // -----------------------------
+    // 4. Transaction (ONLY WRITES)
+    // -----------------------------
+    const result = await db.$transaction(async (tx) => {
+      // Generate order number
+      const orderCount = await tx.order.count();
+      const orderNumber = `ORD-${String(orderCount + 1).padStart(6, "0")}`;
+
+      // Create order
       const order = await tx.order.create({
         data: {
-          orderNumber: nextOrderNumber,
+          orderNumber,
           totalPrice: orderData.summary.total,
-          customerId: customerId,
+          customerId,
           userId: orderData.userId,
           status: "PENDING",
           customRequirements: orderData.customer.notes || null,
         },
       });
 
-      // 4. Create CartItems and Update Stock
-      for (const item of orderData.items) {
-        // Fetch the product with its current variants.
-        const product = await tx.product.findUnique({
-          where: { id: item.productId },
-          select: {
-            thumbnail: true,
-            variants: true,
-            totalStock: true,
-            totalSold: true,
-            status: true,
-          },
-        });
+      // ✅ Batch product updates (parallel)
+      await Promise.all(
+        productUpdates.map((p) =>
+          db.product.update({
+            where: { id: p.id },
+            data: {
+              variants: p.variants,
+              totalStock: p.totalStock,
+              totalSold: p.totalSold,
+            },
+          })
+        )
+      );
 
-        if (!product) {
-          throw new Error(`Product with ID ${item.productId} not found.`);
-        }
-
-        if (product.status !== "PUBLISHED") {
-          throw new Error(
-            `Product "${item.name}" is not available for ordering (Status: ${product.status}).`
-          );
-        }
-
-        // Update the specific variant's stock
-        let variantFound = false;
-        const updatedVariants = product.variants.map((variant) => {
-          if (variant.size === item.size) {
-            variantFound = true;
-            const currentStock = variant.stock || 0;
-
-            if (currentStock < item.quantity) {
-              throw new Error(`Insufficient stock for product "${item.name}" (Size: ${item.size}). Available: ${currentStock}, Requested: ${item.quantity}`);
-            }
-
-            const newStock = currentStock - item.quantity;
-            return {
-              ...variant,
-              stock: newStock,
-            };
-          }
-          return variant;
-        });
-
-        if (!variantFound) {
-          throw new Error(`Variant with size "${item.size}" not found for product "${item.name}".`);
-        }
-
-        // Update product's total stock and total sold
-        const newTotalStock = Math.max(0, product.totalStock - item.quantity);
-        const newTotalSold = product.totalSold + item.quantity;
-
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            variants: updatedVariants,
-            totalStock: newTotalStock,
-            totalSold: newTotalSold,
-          },
-        });
-
-        // Create the cart item record
-        await tx.cartItem.create({
-          data: {
-            title: item.name,
-            thumbnail: product.thumbnail || "",
-            size: item.size || "N/A",
-            price: item.price,
-            subTotal: item.total,
-            quantity: item.quantity,
-            userId: orderData.userId,
-            orderId: order.id,
-            productId: item.productId,
-          },
-        });
-      }
-
-      await logActivityTx(tx, {
-        action: "ORDER_CREATED",
-        description: `Order ${nextOrderNumber} created by user`,
-        entityId: order.id,
-        entityType: "ORDER",
-        userId: orderData.userId,
+      // ✅ Batch cart items insert
+      await tx.cartItem.createMany({
+        data: cartItemsData.map((item) => ({
+          ...item,
+          orderId: order.id,
+        })),
       });
 
       return {
         success: true,
         orderId: order.id,
-        orderNumber: nextOrderNumber,
+        orderNumber,
       } as const;
     });
 
-    return result as CreateOrderResponse;
+    // -----------------------------
+    // 5. Logging (OUTSIDE TRANSACTION)
+    // -----------------------------
+    await logActivity({
+      action: "ORDER_CREATED",
+      description: `Order ${result.orderNumber} created`,
+      entityId: result.orderId,
+      entityType: "ORDER",
+      userId: orderData.userId,
+    });
+
+    return result;
+
   } catch (error) {
     console.error("Error creating order:", error);
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to create order. Please try again.",
-    } as const;
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to create order",
+    };
   }
 }
 
